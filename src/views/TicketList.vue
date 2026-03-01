@@ -1,91 +1,152 @@
 <template>
-  <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-    <div class="px-4 py-6 sm:px-0">
-      <div class="flex justify-between items-center mb-6">
-        <h1 class="text-2xl font-bold text-gray-900">
-          {{ authStore.isAgent ? "All Tickets" : "My Tickets" }}
-        </h1>
-        <router-link
-          v-if="authStore.isCustomer"
-          to="/tickets/new"
-          class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700"
-        >
-          Create Ticket
-        </router-link>
-        <button
-          v-if="authStore.isAgent"
-          @click="exportCSV"
-          :disabled="exporting"
-          class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 disabled:opacity-50"
-        >
-          {{
-            exporting ? "Exporting..." : "Export Closed Tickets (Last Month)"
-          }}
-        </button>
-      </div>
+  <div class="page">
+    <!-- Sidebar only renders for agents -->
+    <AppSidebar
+      v-if="isAgent"
+      :openTicketCount="openTicketsCount"
+      :closedTicketCount="closedTicketsCount"
+    />
 
-      <div v-if="loading" class="text-center py-10">Loading...</div>
-
-      <div
-        v-else-if="tickets.length === 0"
-        class="text-center py-10 text-gray-500"
+    <div class="page-main">
+      <AppTopbar
+        :title="isAgent ? 'Dashboard' : 'My Tickets'"
+        :subtitle="isAgent ? today : 'Track and manage your support requests'"
+        :show-logo="!isAgent"
       >
-        No tickets found.
-      </div>
+        <template #actions>
+          <!-- Agent only: CSV export -->
+          <a v-if="isAgent" class="export-btn" href="/exports/closed_tickets" download>
+            ⬇ Export CSV
+          </a>
+          <!-- Customer only: new ticket -->
+          <AppButton v-if="isCustomer" sm @click="router.push('/tickets/new')">
+            <span class="plus">+</span> New ticket
+          </AppButton>
+          <AppButton variant="ghost" sm @click="logout">Sign out</AppButton>
+        </template>
+      </AppTopbar>
 
-      <div v-else class="bg-white shadow overflow-hidden sm:rounded-md">
-        <ul class="divide-y divide-gray-200">
-          <li v-for="ticket in tickets" :key="ticket.id">
-            <router-link
-              :to="`/tickets/${ticket.id}`"
-              class="block hover:bg-gray-50"
+      <div class="page-body">
+        <!-- Stats -->
+        <div class="stats-grid" :class="{ 'stats-grid--4': isAgent }">
+          <div class="stat-card" v-for="s in stats" :key="s.label">
+            <div class="stat-value" :style="{ color: s.color || '#F1F1F3' }">{{ s.value }}</div>
+            <div class="stat-label">{{ s.label }}</div>
+            <div class="stat-sub">{{ s.sub }}</div>
+          </div>
+        </div>
+
+        <!-- Section header -->
+        <div class="section-head">
+          <h2 class="section-title">{{ isAgent ? 'All Tickets' : 'My Tickets' }}</h2>
+          <div class="filter-bar">
+            <button
+              v-for="f in filters" :key="f.value"
+              :class="['filter-btn', { active: activeFilter === f.value }]"
+              @click="activeFilter = f.value"
             >
-              <div class="px-4 py-4 sm:px-6">
-                <div class="flex items-center justify-between">
-                  <div class="flex items-center">
-                    <p class="text-sm font-medium text-indigo-600 truncate">
-                      {{ ticket.title }}
-                    </p>
-                    <span
-                      :class="statusColor(ticket.status)"
-                      class="ml-2 px-2 inline-flex text-xs leading-5 font-semibold rounded-full"
-                    >
-                      {{ ticket.status }}
-                    </span>
-                  </div>
-                  <div class="ml-2 flex-shrink-0 flex">
-                    <p class="text-sm text-gray-500">
-                      {{ formatDate(ticket.createdAt) }}
-                    </p>
-                  </div>
-                </div>
-                <div class="mt-2 sm:flex sm:justify-between">
-                  <div class="sm:flex">
-                    <p class="flex items-center text-sm text-gray-500">
-                      Customer: {{ ticket?.customer?.name }}
-                    </p>
-                  </div>
-                  <div
-                    v-if="ticket.agent"
-                    class="mt-2 flex items-center text-sm text-gray-500 sm:mt-0"
-                  >
-                    Agent: {{ ticket.agent.name }}
-                  </div>
-                </div>
+              {{ f.label }}
+            </button>
+          </div>
+        </div>
+
+        <!-- Table -->
+        <div class="table-card">
+          <div class="table-header">
+            <!-- Agent gets extra columns -->
+            <span>Ticket</span>
+            <span v-if="isAgent">Customer</span>
+            <span>Status</span>
+            <span v-if="isAgent">Assigned</span>
+            <span>Created</span>
+            <span></span>
+          </div>
+
+          <div
+            v-if="filteredTickets.length === 0"
+            class="text-center py-10 text-gray-500"
+          >
+            No tickets found.
+          </div>
+
+          <div
+            v-for="t in filteredTickets" :key="t.id"
+            class="table-row"
+            :style="gridStyle"
+            @click="goToTicket(t.id)"
+          >
+            <!-- Ticket title + meta -->
+            <div>
+              <div class="ticket-meta">
+                <span class="ticket-id">{{ t.id }}</span>
+                <span v-if="t.priority === 'high'" class="priority-tag">HIGH</span>
               </div>
-            </router-link>
-          </li>
-        </ul>
+              <div class="ticket-title">{{ t.title }}</div>
+            </div>
+
+            <!-- Agent only: customer column -->
+            <div v-if="isAgent" class="customer-cell">
+              <AppAvatar :name="t.customer" :size="22" color="#3B82F6" />
+              <span>{{ t.customer }}</span>
+            </div>
+
+            <!-- Status -->
+            <div class="cell-center">
+              <AppBadge :status="t.status" />
+            </div>
+
+            <!-- Agent only: assigned column -->
+            <div v-if="isAgent">
+              <div v-if="t.agent" class="agent-cell">
+                <AppAvatar :name="t.agent" :size="20" />
+                <span>{{ t.agent }}</span>
+              </div>
+              <span v-else class="unassigned-tag">Unassigned</span>
+            </div>
+
+            <!-- Created -->
+            <div class="cell-muted">{{ t.created }}</div>
+
+            <!-- Caret -->
+            <div class="cell-muted cell-caret">›</div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed } from "vue";
+import { ref, computed } from 'vue'
+import { useRouter } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
+import AppSidebar from '@/layout/AppSidebar.vue'
+import AppTopbar  from '@/layout/AppTopbar.vue'
+import AppButton  from '@/components/AppButton.vue'
+import AppBadge   from '@/components/AppBadge.vue'
+import AppAvatar  from '@/components/AppAvatar.vue'
 import { useQuery, useMutation } from "@vue/apollo-composable";
 import gql from "graphql-tag";
-import { useAuthStore } from "../stores/auth";
+
+const router = useRouter()
+const auth   = useAuthStore()
+
+const isAgent    = computed(() => auth.isAgent)
+const isCustomer = computed(() => auth.isCustomer)
+
+const today = new Date().toLocaleDateString('en-US', {
+  weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
+})
+
+function logout() {
+  auth.signOut()
+  router.push('/login')
+}
+
+function goToTicket(id) {
+  // Single route — role-specific actions are inside the detail view
+  router.push(`/tickets/${id}`)
+}
 
 const TICKETS_QUERY = gql`
   query Tickets($status: String) {
@@ -119,20 +180,30 @@ const EXPORT_MUTATION = gql`
   }
 `;
 
-const authStore = useAuthStore();
 const { result, loading } = useQuery(TICKETS_QUERY);
 const { mutate: exportMutation } = useMutation(EXPORT_MUTATION);
 
 const tickets = computed(() => result.value?.tickets?.nodes || []);
+
 const exporting = ref(false);
+const allTickets = computed(() => tickets.value.map(t => ({
+  id: t.id,
+  title: t.title,
+  status: t.status,
+  customer: t.customer.name,
+  agent: t.agent ? t.agent.name : null,
+  created: formatDate(t.createdAt),
+})));
 
-const statusColor = (status) =>
-  ({
-    open: "bg-yellow-100 text-yellow-800",
-    in_progress: "bg-blue-100 text-blue-800",
-    closed: "bg-green-100 text-green-800",
-  }[status] || "bg-gray-100 text-gray-800");
+const openTicketsCount = computed(() =>
+  (tickets.value || []).filter(t => t.status === 'open').length
+)
+const closedTicketsCount = computed(() =>
+  (tickets.value || []).filter(t => t.status === 'closed').length
+)
 
+console.log('Open tickets count:', openTicketsCount.value)
+console.log('Closed tickets:', closedTicketsCount.value)
 const formatDate = (date) => new Date(date).toLocaleDateString();
 
 const exportCSV = async () => {
@@ -157,4 +228,136 @@ const exportCSV = async () => {
     exporting.value = false;
   }
 };
+
+const activeFilter = ref('all')
+const filters = [
+  { label: 'All',         value: 'all'         },
+  { label: 'Open',        value: 'open'        },
+  { label: 'Closed',      value: 'closed'      },
+]
+
+const filteredTickets = computed(() => {
+  const tickets = allTickets.value || []
+
+  if (activeFilter.value === 'all') {
+    return tickets
+  }
+
+  return tickets.filter(t => t.status === activeFilter.value)
+})
+
+// Stats differ by role
+const stats = computed(() => isAgent.value
+  ? [
+      { label: 'Open',        value: openTicketsCount.value,        color: '#3B82F6', sub: 'Unassigned'  },
+      { label: 'Closed',      value: closedTicketsCount.value,      color: '#10B981', sub: 'Last 30 days'},
+      { label: 'Avg Response', value: '1.4h',                                                           color: '#818CF8', sub: 'This week'  },
+    ]
+  : [
+      { label: 'Total',    value: allTickets.value.length,                                           sub: 'All time'     },
+      { label: 'Open',     value: openTicketsCount.value,  color: '#F59E0B', sub: 'Active now' },
+      { label: 'Resolved', value: closedTicketsCount.value,       color: '#10B981', sub: 'Last 30 days' },
+    ]
+)
+
+// Grid columns adjust based on role
+const gridStyle = computed(() => ({
+  gridTemplateColumns: isAgent.value
+    ? '1fr 130px 110px 120px 80px 32px'
+    : '1fr 120px 100px 32px',
+}))
 </script>
+
+<style scoped>
+.page      { display: flex; min-height: 100vh; background: #0A0A0F; font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif; }
+.page-main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+.page-body { padding: 28px 32px; }
+.plus      { font-size: 16px; line-height: 1; }
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  margin-bottom: 28px;
+}
+.stats-grid--4 { grid-template-columns: repeat(4, 1fr); }
+
+.stat-card  { background: #111118; border: 1px solid #1E1E2E; border-radius: 12px; padding: 18px 20px; }
+.stat-value { font-size: 30px; font-weight: 800; letter-spacing: -0.04em; }
+.stat-label { font-size: 13px; font-weight: 600; color: #F1F1F3; margin-top: 4px; }
+.stat-sub   { font-size: 11px; color: #4A4A62; margin-top: 2px; }
+
+.section-head  { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.section-title { font-size: 15px; font-weight: 700; color: #F1F1F3; }
+
+.filter-bar {
+  display: flex;
+  gap: 4px;
+  background: #111118;
+  border: 1px solid #1E1E2E;
+  border-radius: 9px;
+  padding: 3px;
+}
+.filter-btn {
+  padding: 5px 14px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: #9494A8;
+  font-size: 12px;
+  font-weight: 400;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.1s;
+}
+.filter-btn.active { background: #16161F; color: #F1F1F3; font-weight: 600; }
+
+.table-card { background: #111118; border: 1px solid #1E1E2E; border-radius: 12px; overflow: hidden; }
+
+.table-header {
+  display: grid;
+  grid-template-columns: 1fr 120px 100px 32px;
+  padding: 10px 20px;
+  border-bottom: 1px solid #1E1E2E;
+  font-size: 11px;
+  font-weight: 700;
+  color: #4A4A62;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.table-row {
+  display: grid;
+  padding: 14px 20px;
+  cursor: pointer;
+  border-bottom: 1px solid #1E1E2E;
+  transition: background 0.1s;
+  align-items: center;
+}
+.table-row:last-child { border-bottom: none; }
+.table-row:hover      { background: #16161F; }
+
+.ticket-meta   { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+.ticket-id     { font-family: monospace; font-size: 11px; color: #4A4A62; font-weight: 600; }
+.priority-tag  { font-size: 10px; background: #2D1218; color: #EF4444; padding: 1px 6px; border-radius: 4px; font-weight: 700; letter-spacing: 0.04em; }
+.ticket-title  { font-size: 13px; color: #F1F1F3; font-weight: 500; line-height: 1.4; }
+
+.customer-cell { display: flex; align-items: center; gap: 7px; font-size: 12px; color: #9494A8; }
+.agent-cell    { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #9494A8; }
+.unassigned-tag { font-size: 11px; background: #1A1A2A; color: #4A4A62; padding: 2px 8px; border-radius: 4px; font-weight: 600; }
+.cell-center   { display: flex; align-items: center; }
+.cell-muted    { font-size: 12px; color: #4A4A62; display: flex; align-items: center; }
+.cell-caret    { font-size: 16px; }
+
+.export-btn {
+  padding: 7px 14px;
+  background: #16161F;
+  border: 1px solid #1E1E2E;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #9494A8;
+  text-decoration: none;
+  transition: all 0.15s;
+}
+.export-btn:hover { border-color: #2A2A3E; color: #F1F1F3; }
+</style>

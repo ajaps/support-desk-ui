@@ -6,8 +6,8 @@
         <div class="logo-mark">S</div>
       </router-link>
       <div>
-        <h1 class="topbar-title">Support Desk</h1>
-        <p v-if="subtitle" class="topbar-sub">Track and manage your support requests</p>
+        <h1 class="topbar-title">{{ title }}</h1>
+        <p v-if="subtitle" class="topbar-sub">{{ subtitle }}</p>
       </div>
     </div>
     <div class="topbar-actions">
@@ -17,11 +17,11 @@
 </template>
 
 <script setup>
-// defineProps({
-//   title:    String,
-//   subtitle: String,
-//   showLogo: Boolean,
-// })
+defineProps({
+  title:    String,
+  subtitle: String,
+  showLogo: Boolean,
+})
 </script>
 
 <style scoped>
