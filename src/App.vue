@@ -2,13 +2,12 @@
 import { onMounted, provide } from "vue";
 import { useAuthStore } from "./stores/auth";
 import NavigationBar from "./components/NavigationBar.vue";
-import { DefaultApolloClient } from '@vue/apollo-composable'
-import { apolloClient } from './apollo/client'
+import { DefaultApolloClient } from "@vue/apollo-composable";
+import { apolloClient } from "./apollo/client";
 
-provide(DefaultApolloClient, apolloClient)
+provide(DefaultApolloClient, apolloClient);
 
 const authStore = useAuthStore();
-
 </script>
 
 <template>

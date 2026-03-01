@@ -9,16 +9,13 @@
         </div>
         <div class="flex items-center space-x-4">
           <span class="text-indigo-200">{{ authStore.user?.name }}</span>
-          <span 
+          <span
             :class="authStore.isAgent ? 'bg-green-500' : 'bg-blue-500'"
             class="px-2 py-1 rounded text-xs text-white"
           >
             {{ authStore.user?.role }}
           </span>
-          <button 
-            @click="logout"
-            class="text-white hover:text-indigo-200"
-          >
+          <button @click="logout" class="text-white hover:text-indigo-200">
             Logout
           </button>
         </div>
@@ -28,14 +25,14 @@
 </template>
 
 <script setup>
-import { useAuthStore } from '../stores/auth'
-import { useRouter } from 'vue-router'
+import { useAuthStore } from "../stores/auth";
+import { useRouter } from "vue-router";
 
-const authStore = useAuthStore()
-const router = useRouter()
+const authStore = useAuthStore();
+const router = useRouter();
 
 const logout = () => {
-  authStore.signOut()
-  router.push('/login')
-}
+  authStore.signOut();
+  router.push("/login");
+};
 </script>
