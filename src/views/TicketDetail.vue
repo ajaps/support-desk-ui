@@ -43,21 +43,29 @@
               <h2 class="ticket-title">{{ ticket.title }}</h2>
               <AppBadge :status="ticket.status" />
             </div>
+
             <p class="ticket-desc">{{ ticket.description }}</p>
 
-            <!-- Attachments (visible to both) -->
-            <div v-if="ticket.attachmentUrls?.length" class="attachments">
-              <div class="attachments-label">Attachments</div>
+            <div v-if="ticket.fileUrl" class="attachments">
+              <div class="attachments-label">Attachment</div>
+
+              <img
+                :src="ticket.fileUrl"
+                alt="attachment"
+                class="attachment-image"
+              />
+            </div>
+            <!-- <div v-if="ticket.fileUrl" class="attachments">
+              <div class="attachments-label">Attachment</div>
+
               <a
-                v-for="url in ticket.attachmentUrls"
-                :key="url"
-                :href="url"
+                :href="ticket.fileUrl"
                 target="_blank"
                 class="attachment-link"
               >
                 📎 View file
               </a>
-            </div>
+            </div> -->
           </div>
 
           <!-- Comment thread -->
@@ -205,7 +213,7 @@ const ticket = computed(() => ({
   agent: result.value?.ticket?.agent,
   createdAt: result.value?.ticket?.createdAt,
   formatedCreatedAt: timeAgo(result.value?.ticket?.createdAt),
-  attachmentUrls: result.value?.ticket?.attachmentUrls || [],
+  fileUrl: result.value?.ticket?.fileUrl || null,
 }));
 
 const comments = computed(() =>
@@ -361,6 +369,14 @@ const metaRows = computed(() => [
   color: #818cf8;
   margin-right: 12px;
   text-decoration: none;
+}
+.attachment-image {
+  max-width: 100%;
+  max-height: 320px;
+  border-radius: 10px;
+  margin-top: 10px;
+  object-fit: contain;
+  border: 1px solid #1e1e2e;
 }
 .attachment-link:hover {
   text-decoration: underline;

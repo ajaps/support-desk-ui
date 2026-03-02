@@ -22,7 +22,7 @@ export const GET_TICKETS = gql`
 export const GET_TICKET = gql`
   query GetTicket($id: ID!) {
     ticket(id: $id) {
-      id title description status createdAt attachmentUrls
+      id title description status createdAt fileUrl
       customer { id name email }
       agent { id name email }
       comments {
@@ -34,11 +34,12 @@ export const GET_TICKET = gql`
 `;
 
 export const CREATE_TICKET = gql`
-  mutation CreateTicket($title: String!, $description: String!) {
+  mutation CreateTicket($title: String!, $description: String!, $fileSignedId: String) {
     createTicket(
       input: {
         title: $title
         description: $description
+        fileSignedId: $fileSignedId
       }
     ) {
       ticket {
