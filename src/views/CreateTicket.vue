@@ -1,132 +1,111 @@
 <template>
-  <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-    <div class="px-4 py-6 sm:px-0">
-      <div class="max-w-2xl mx-auto">
-        <h1 class="text-2xl font-bold text-gray-900 mb-6">
-          Create Support Ticket
-        </h1>
+  <div class="page">
+    <AppTopbar title="New Ticket" subtitle="Submit a support request" show-logo>
+      <template #actions>
+        <AppButton variant="ghost" sm @click="router.back()">← Cancel</AppButton>
+      </template>
+    </AppTopbar>
 
-        <form
-          @submit.prevent="handleSubmit"
-          class="space-y-6 bg-white shadow sm:rounded-lg p-6"
-        >
+    <div class="form-wrap">
+      <div class="form-card">
+        <div class="form-fields">
+          <AppInput v-model="title" label="Subject/Title" placeholder="Briefly describe your issue" />
+          <AppTextarea
+            v-model="description" label="Description" :rows="6"
+            placeholder="Steps to reproduce, expected vs actual behavior, error messages…"
+          />
+
+          <!-- Upload -->
           <div>
-            <label class="block text-sm font-medium text-gray-700">Title</label>
-            <input
-              v-model="form.title"
-              type="text"
-              required
-              class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-            />
+            <label class="field-label">
+              Attachments <span class="field-label--muted">(optional)</span>
+            </label>
+            <div class="upload-zone">
+              <div class="upload-icon">⬆</div>
+              <div class="upload-text">
+                Drag & drop or <span class="upload-link">browse</span>
+              </div>
+              <div class="upload-hint">PNG, JPG, PDF up to 10MB</div>
+            </div>
           </div>
 
-          <div>
-            <label class="block text-sm font-medium text-gray-700"
-              >Description</label
-            >
-            <textarea
-              v-model="form.description"
-              rows="4"
-              required
-              class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-            ></textarea>
+          <div class="form-footer">
+            <!-- Errors sit just above the submit button -->
+            <AppAlert :errors="errors" style="flex: 1; margin-right: 8px;" />
+            <div style="display: flex; gap: 10px; flex-shrink: 0;">
+              <AppButton variant="ghost" @click="router.back()">Cancel</AppButton>
+              <AppButton :disabled="!title.trim() || !description.trim() || submitting" @click="submit">
+                {{ submitting ? 'Submitting…' : 'Submit ticket →' }}
+              </AppButton>
+            </div>
           </div>
-
-          <div>
-            <label class="block text-sm font-medium text-gray-700"
-              >Attachments (Optional)</label
-            >
-            <input
-              type="file"
-              multiple
-              accept="image/*,.pdf"
-              @change="handleFileChange"
-              class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
-            />
-            <p class="mt-1 text-xs text-gray-500">Images and PDF files only</p>
-          </div>
-
-          <div v-if="error" class="text-red-600 text-sm">
-            {{ error }}
-          </div>
-
-          <div class="flex justify-end space-x-3">
-            <router-link
-              to="/"
-              class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-            >
-              Cancel
-            </router-link>
-            <button
-              type="submit"
-              :disabled="submitting"
-              class="bg-indigo-600 py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
-            >
-              {{ submitting ? "Creating..." : "Create Ticket" }}
-            </button>
-          </div>
-        </form>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref } from "vue";
-import { useRouter } from "vue-router";
-import { useMutation } from "@vue/apollo-composable";
-import gql from "graphql-tag";
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { useMutation } from '@vue/apollo-composable'
+import { useGraphqlErrors } from '@/composables/useGraphqlErrors'
+import { CREATE_TICKET } from '@/graphql/tickets.gql'
+import AppTopbar   from '@/layout/AppTopbar.vue'
+import AppButton   from '@/components/AppButton.vue'
+import AppInput    from '@/components/AppInput.vue'
+import AppTextarea from '@/components/AppTextarea.vue'
+import AppAlert    from '@/components/AppAlert.vue'
 
-const CREATE_TICKET_MUTATION = gql`
-  mutation CreateTicket($title: String!, $description: String!) {
-    createTicket(input: { title: $title, description: $description }) {
-      ticket {
-        id
-        title
-      }
-      errors
-    }
-  }
-`;
+const router      = useRouter()
+const title       = ref('')
+const description = ref('')
+const submitting  = ref(false)
 
-const router = useRouter();
-const { mutate } = useMutation(CREATE_TICKET_MUTATION);
+const { errors, safeCall } = useGraphqlErrors()
+const { mutate } = useMutation(CREATE_TICKET)
 
-const form = ref({
-  title: "",
-  description: "",
-});
-const attachments = ref([]);
-const error = ref("");
-const submitting = ref(false);
+const priorities = [
+  { value: 'low',    label: 'Low',    color: '#10B981' },
+  { value: 'medium', label: 'Medium', color: '#F59E0B' },
+  { value: 'high',   label: 'High',   color: '#EF4444' },
+]
 
-const handleFileChange = (event) => {
-  attachments.value = Array.from(event.target.files);
-};
-
-const handleSubmit = async () => {
-  submitting.value = true;
-  error.value = "";
-
-  try {
-    // Note: For file uploads with GraphQL, you'd typically use
-    // apollo-upload-client or REST endpoint for multipart uploads
-    // This is a simplified version
-
-    const result = await mutate({
-      title: form.value.title,
-      description: form.value.description,
-    });
-
-    if (result.data.createTicket.errors.length > 0) {
-      throw new Error(result.data.createTicket.errors.join(", "));
-    }
-
-    router.push(`/tickets/${result.data.createTicket.ticket.id}`);
-  } catch (e) {
-    error.value = e.message;
-  } finally {
-    submitting.value = false;
-  }
-};
+async function submit() {
+  submitting.value = true
+  await safeCall(
+    () => mutate({ title: title.value, description: description.value }),
+    'createTicket'
+  )
+  submitting.value = false
+  if (!errors.value.length) router.push('/tickets')
+}
 </script>
+
+<style scoped>
+.page     { min-height: 100vh; background: #0A0A0F; font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif; }
+.form-wrap { max-width: 660px; margin: 36px auto; padding: 0 24px; }
+
+.form-card   { background: #111118; border: 1px solid #1E1E2E; border-radius: 14px; padding: 28px; }
+.form-fields { display: flex; flex-direction: column; gap: 20px; }
+
+.field-label       { display: block; font-size: 13px; font-weight: 500; color: #9494A8; margin-bottom: 8px; }
+.field-label--muted { color: #4A4A62; }
+
+.upload-zone {
+  border: 1px dashed #2A2A3E;
+  border-radius: 10px;
+  padding: 28px 20px;
+  text-align: center;
+  cursor: pointer;
+  background: #16161F;
+  transition: border-color 0.15s;
+}
+.upload-zone:hover { border-color: #6366F1; }
+.upload-icon  { font-size: 22px; margin-bottom: 8px; opacity: 0.4; }
+.upload-text  { font-size: 13px; color: #9494A8; }
+.upload-link  { color: #818CF8; font-weight: 600; }
+.upload-hint  { font-size: 11px; color: #4A4A62; margin-top: 4px; }
+
+.form-footer { display: flex; justify-content: flex-end; gap: 10px; padding-top: 4px; }
+</style>

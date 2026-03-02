@@ -202,8 +202,6 @@ const closedTicketsCount = computed(() =>
   (tickets.value || []).filter(t => t.status === 'closed').length
 )
 
-console.log('Open tickets count:', openTicketsCount.value)
-console.log('Closed tickets:', closedTicketsCount.value)
 const formatDate = (date) => new Date(date).toLocaleDateString();
 
 const exportCSV = async () => {

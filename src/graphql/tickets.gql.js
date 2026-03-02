@@ -27,7 +27,7 @@ export const GET_TICKET = gql`
       agent { id name email }
       comments {
         id body createdAt
-        user { id name role }
+        author:user { id name role }
       }
     }
   }
@@ -50,10 +50,10 @@ export const CREATE_TICKET = gql`
   }
 `;
 
-export const UPDATE_TICKET_STATUS = gql`
-  mutation UpdateTicketStatus($ticketId: ID!, $status: String!) {
-    updateTicketStatus(input: { ticketId: $ticketId, status: $status }) {
-      ticket { id status }
+export const CLOSE_TICKET = gql`
+  mutation closeTicket($ticketId: ID!) {
+    closeTicket(input: { ticketId: $ticketId}) {
+      ticket { id status closedAt }
       errors
     }
   }

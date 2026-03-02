@@ -15,7 +15,8 @@
               v-if="isAgent"
               :value="ticket.status"
               class="status-select"
-              @change="updateStatus($event.target.value)"
+              :disabled="ticket.status === 'closed'"
+              @change="updateTicketStatus($event.target.value)"
             >
               <option value="open">Open</option>
               <option value="closed">Closed</option>
@@ -90,7 +91,7 @@
                       >AGENT</span
                     >
                   </div>
-                  <span class="comment-time">{{ c.time }}</span>
+                  <span class="comment-time">{{ c.formatedCreatedAt }}</span>
                 </div>
               </div>
               <p class="comment-body">{{ c.body }}</p>
@@ -168,11 +169,7 @@ import { useQuery, useMutation } from "@vue/apollo-composable";
 import { useAuthStore } from "@/stores/auth";
 import { useGraphqlErrors } from "@/composables/useGraphqlErrors";
 import { CREATE_COMMENT } from "@/graphql/comments.gql";
-import {
-  GET_TICKET,
-  UPDATE_TICKET_STATUS,
-  ASSIGN_TICKET,
-} from "@/graphql/tickets.gql";
+import { GET_TICKET, CLOSE_TICKET, ASSIGN_TICKET } from "@/graphql/tickets.gql";
 import AppSidebar from "@/layout/AppSidebar.vue";
 import AppTopbar from "@/layout/AppTopbar.vue";
 import AppButton from "@/components/AppButton.vue";
@@ -180,10 +177,12 @@ import AppBadge from "@/components/AppBadge.vue";
 import AppAvatar from "@/components/AppAvatar.vue";
 import AppTextarea from "@/components/AppTextarea.vue";
 import AppAlert from "@/components/AppAlert.vue";
+import { useTimeAgo } from "@/composables/useTimeAgo";
 
 const route = useRoute();
 const router = useRouter();
 const auth = useAuthStore();
+const { timeAgo } = useTimeAgo();
 
 const isAgent = computed(() => auth.isAgent);
 const isCustomer = computed(() => auth.isCustomer);
@@ -204,16 +203,20 @@ const ticket = computed(() => ({
   status: result.value?.ticket?.status,
   customer: result.value?.ticket?.customer,
   agent: result.value?.ticket?.agent,
+  createdAt: result.value?.ticket?.createdAt,
+  formatedCreatedAt: timeAgo(result.value?.ticket?.createdAt),
   attachmentUrls: result.value?.ticket?.attachmentUrls || [],
 }));
 
 const comments = computed(() =>
-  (result.value?.ticket?.comments?.nodes || []).map((c) => ({
+  (result.value?.ticket?.comments || []).map((c) => ({
     id: c.id,
     role: c.author.role,
     name: c.author.name,
     time: new Date(c.createdAt).toLocaleString(),
     body: c.body,
+    createdAt: c.createdAt,
+    formatedCreatedAt: timeAgo(c.createdAt),
   }))
 );
 
@@ -231,20 +234,21 @@ const submitting = ref(false);
 async function postComment() {
   submitting.value = true;
   await commentCall(
-    () =>
-      addComment({ input: { ticketId: route.params.id, body: reply.value } }),
+    () => addComment({ ticketId: route.params.id, body: reply.value }),
     "createComment"
   );
   submitting.value = false;
   if (!commentErrors.value.length) reply.value = "";
 }
 
-const { mutate: changeStatus } = useMutation(UPDATE_TICKET_STATUS);
+const { mutate: closeTicket } = useMutation(CLOSE_TICKET);
 const { mutate: assignTicket } = useMutation(ASSIGN_TICKET);
 
-async function updateStatus(status) {
-  await changeStatus({ input: { ticketId: ticket.value.id, status } });
-  ticket.value.status = status; // optimistic update
+async function updateTicketStatus(status) {
+  if (status === "closed") {
+    await closeTicket({ ticketId: ticket.value.id });
+    ticket.value.status = status; // optimistic update
+  }
 }
 
 async function assignToSelf() {
@@ -260,8 +264,13 @@ async function assignToSelf() {
 const metaRows = computed(() => [
   { label: "Status", value: ticket.value.status, isBadge: true },
   { label: "Ticket ID", value: ticket.value.id, mono: true },
-  { label: "Opened", value: "Today at 9:42 AM" },
-  { label: "Last update", value: "1 hour ago" },
+  { label: "Opened", value: ticket.value.formatedCreatedAt },
+  {
+    label: "Last update",
+    value:
+      comments.value[comments.value.length - 1]?.formatedCreatedAt ||
+      ticket.value.formatedCreatedAt,
+  },
   {
     label: "Agent",
     value: ticket.value.agent?.name ?? "Unassigned",
