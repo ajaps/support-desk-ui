@@ -15,7 +15,12 @@
       >
         <template #actions>
           <!-- Agent only: CSV export -->
-          <a v-if="isAgent" class="export-btn" href="/exports/closed_tickets" download>
+          <a
+            v-if="isAgent"
+            class="export-btn"
+            href="#"
+            @click.prevent="exportCSV"
+          >
             ⬇ Export CSV
           </a>
           <!-- Customer only: new ticket -->
@@ -30,7 +35,9 @@
         <!-- Stats -->
         <div class="stats-grid" :class="{ 'stats-grid--4': isAgent }">
           <div class="stat-card" v-for="s in stats" :key="s.label">
-            <div class="stat-value" :style="{ color: s.color || '#F1F1F3' }">{{ s.value }}</div>
+            <div class="stat-value" :style="{ color: s.color || '#F1F1F3' }">
+              {{ s.value }}
+            </div>
             <div class="stat-label">{{ s.label }}</div>
             <div class="stat-sub">{{ s.sub }}</div>
           </div>
@@ -38,10 +45,13 @@
 
         <!-- Section header -->
         <div class="section-head">
-          <h2 class="section-title">{{ isAgent ? 'All Tickets' : 'My Tickets' }}</h2>
+          <h2 class="section-title">
+            {{ isAgent ? "All Tickets" : "My Tickets" }}
+          </h2>
           <div class="filter-bar">
             <button
-              v-for="f in filters" :key="f.value"
+              v-for="f in filters"
+              :key="f.value"
               :class="['filter-btn', { active: activeFilter === f.value }]"
               @click="activeFilter = f.value"
             >
@@ -70,7 +80,8 @@
           </div>
 
           <div
-            v-for="t in filteredTickets" :key="t.id"
+            v-for="t in filteredTickets"
+            :key="t.id"
             class="table-row"
             :style="gridStyle"
             @click="goToTicket(t.id)"
@@ -79,7 +90,9 @@
             <div>
               <div class="ticket-meta">
                 <span class="ticket-id">{{ t.id }}</span>
-                <span v-if="t.priority === 'high'" class="priority-tag">HIGH</span>
+                <span v-if="t.priority === 'high'" class="priority-tag"
+                  >HIGH</span
+                >
               </div>
               <div class="ticket-title">{{ t.title }}</div>
             </div>
@@ -117,35 +130,37 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
-import { useRouter } from 'vue-router'
-import { useAuthStore } from '@/stores/auth'
-import AppSidebar from '@/layout/AppSidebar.vue'
-import AppTopbar  from '@/layout/AppTopbar.vue'
-import AppButton  from '@/components/AppButton.vue'
-import AppBadge   from '@/components/AppBadge.vue'
-import AppAvatar  from '@/components/AppAvatar.vue'
+import { ref, computed } from "vue";
+import { useRouter } from "vue-router";
+import { useAuthStore } from "@/stores/auth";
+import AppSidebar from "@/layout/AppSidebar.vue";
+import AppTopbar from "@/layout/AppTopbar.vue";
+import AppButton from "@/components/AppButton.vue";
+import AppBadge from "@/components/AppBadge.vue";
+import AppAvatar from "@/components/AppAvatar.vue";
 import { useQuery, useMutation } from "@vue/apollo-composable";
 import gql from "graphql-tag";
 
-const router = useRouter()
-const auth   = useAuthStore()
+const router = useRouter();
+const auth = useAuthStore();
 
-const isAgent    = computed(() => auth.isAgent)
-const isCustomer = computed(() => auth.isCustomer)
+const isAgent = computed(() => auth.isAgent);
+const isCustomer = computed(() => auth.isCustomer);
 
-const today = new Date().toLocaleDateString('en-US', {
-  weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
-})
+const today = new Date().toLocaleDateString("en-US", {
+  weekday: "long",
+  day: "numeric",
+  month: "long",
+  year: "numeric",
+});
 
 function logout() {
-  auth.signOut()
-  router.push('/login')
+  auth.signOut();
+  router.push("/login");
 }
 
 function goToTicket(id) {
-  // Single route — role-specific actions are inside the detail view
-  router.push(`/tickets/${id}`)
+  router.push(`/tickets/${id}`);
 }
 
 const TICKETS_QUERY = gql`
@@ -172,105 +187,132 @@ const TICKETS_QUERY = gql`
 `;
 
 const EXPORT_MUTATION = gql`
-  mutation ExportClosedTickets {
-    exportClosedTickets {
-      csvData
-      errors
+  mutation ExportRecentlyClosedTickets {
+    exportRecentlyClosedTickets(input: {}) {
+      message
+      success
     }
   }
 `;
 
 const { result, loading } = useQuery(TICKETS_QUERY);
-const { mutate: exportMutation } = useMutation(EXPORT_MUTATION);
+const { mutate: exportMutate, loading: exportLoading } =
+  useMutation(EXPORT_MUTATION); // ← fix
 
 const tickets = computed(() => result.value?.tickets?.nodes || []);
 
-const exporting = ref(false);
-const allTickets = computed(() => tickets.value.map(t => ({
-  id: t.id,
-  title: t.title,
-  status: t.status,
-  customer: t.customer.name,
-  agent: t.agent ? t.agent.name : null,
-  created: formatDate(t.createdAt),
-})));
+const allTickets = computed(() =>
+  tickets.value.map((t) => ({
+    id: t.id,
+    title: t.title,
+    status: t.status,
+    customer: t.customer.name,
+    agent: t.agent ? t.agent.name : null,
+    created: formatDate(t.createdAt),
+  }))
+);
 
-const openTicketsCount = computed(() =>
-  (tickets.value || []).filter(t => t.status === 'open').length
-)
-const closedTicketsCount = computed(() =>
-  (tickets.value || []).filter(t => t.status === 'closed').length
-)
+const openTicketsCount = computed(
+  () => tickets.value.filter((t) => t.status === "open").length
+);
+const closedTicketsCount = computed(
+  () => tickets.value.filter((t) => t.status === "closed").length
+);
 
 const formatDate = (date) => new Date(date).toLocaleDateString();
 
 const exportCSV = async () => {
-  exporting.value = true;
   try {
-    const result = await exportMutation();
-    if (result.data.exportClosedTickets.csvData) {
-      const blob = new Blob([result.data.exportClosedTickets.csvData], {
-        type: "text/csv",
-      });
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `closed-tickets-${
-        new Date().toISOString().split("T")[0]
-      }.csv`;
-      a.click();
+    const { data } = await exportMutate();
+
+    if (data.exportRecentlyClosedTickets.success) {
+      alert(data.exportRecentlyClosedTickets.message);
+    } else {
+      alert("Export failed: " + data.exportRecentlyClosedTickets.message);
     }
   } catch (e) {
     alert("Export failed: " + e.message);
-  } finally {
-    exporting.value = false;
   }
 };
 
-const activeFilter = ref('all')
+const activeFilter = ref("all");
 const filters = [
-  { label: 'All',         value: 'all'         },
-  { label: 'Open',        value: 'open'        },
-  { label: 'Closed',      value: 'closed'      },
-]
+  { label: "All", value: "all" },
+  { label: "Open", value: "open" },
+  { label: "Closed", value: "closed" },
+];
 
 const filteredTickets = computed(() => {
-  const tickets = allTickets.value || []
+  if (activeFilter.value === "all") return allTickets.value;
+  return allTickets.value.filter((t) => t.status === activeFilter.value);
+});
 
-  if (activeFilter.value === 'all') {
-    return tickets
-  }
+const stats = computed(() =>
+  isAgent.value
+    ? [
+        {
+          label: "Open",
+          value: openTicketsCount.value,
+          color: "#3B82F6",
+          sub: "Unassigned",
+        },
+        {
+          label: "Closed",
+          value: closedTicketsCount.value,
+          color: "#10B981",
+          sub: "Last 30 days",
+        },
+        {
+          label: "Avg Response",
+          value: "1.4h",
+          color: "#818CF8",
+          sub: "This week",
+        },
+      ]
+    : [
+        { label: "Total", value: allTickets.value.length, sub: "All time" },
+        {
+          label: "Open",
+          value: openTicketsCount.value,
+          color: "#F59E0B",
+          sub: "Active now",
+        },
+        {
+          label: "Resolved",
+          value: closedTicketsCount.value,
+          color: "#10B981",
+          sub: "Last 30 days",
+        },
+      ]
+);
 
-  return tickets.filter(t => t.status === activeFilter.value)
-})
-
-// Stats differ by role
-const stats = computed(() => isAgent.value
-  ? [
-      { label: 'Open',        value: openTicketsCount.value,        color: '#3B82F6', sub: 'Unassigned'  },
-      { label: 'Closed',      value: closedTicketsCount.value,      color: '#10B981', sub: 'Last 30 days'},
-      { label: 'Avg Response', value: '1.4h',                                                           color: '#818CF8', sub: 'This week'  },
-    ]
-  : [
-      { label: 'Total',    value: allTickets.value.length,                                           sub: 'All time'     },
-      { label: 'Open',     value: openTicketsCount.value,  color: '#F59E0B', sub: 'Active now' },
-      { label: 'Resolved', value: closedTicketsCount.value,       color: '#10B981', sub: 'Last 30 days' },
-    ]
-)
-
-// Grid columns adjust based on role
 const gridStyle = computed(() => ({
   gridTemplateColumns: isAgent.value
-    ? '1fr 130px 110px 120px 80px 32px'
-    : '1fr 120px 100px 32px',
-}))
+    ? "1fr 130px 110px 120px 80px 32px"
+    : "1fr 120px 100px 32px",
+}));
 </script>
 
 <style scoped>
-.page      { display: flex; min-height: 100vh; background: #0A0A0F; font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif; }
-.page-main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
-.page-body { padding: 28px 32px; }
-.plus      { font-size: 16px; line-height: 1; }
+.page {
+  display: flex;
+  min-height: 100vh;
+  background: #0a0a0f;
+  font-family: -apple-system, BlinkMacSystemFont, "Inter", sans-serif;
+}
+.page-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.page-body {
+  padding: 28px 32px;
+}
+.plus {
+  font-size: 16px;
+  line-height: 1;
+}
 
 .stats-grid {
   display: grid;
@@ -278,21 +320,50 @@ const gridStyle = computed(() => ({
   gap: 14px;
   margin-bottom: 28px;
 }
-.stats-grid--4 { grid-template-columns: repeat(4, 1fr); }
+.stats-grid--4 {
+  grid-template-columns: repeat(4, 1fr);
+}
 
-.stat-card  { background: #111118; border: 1px solid #1E1E2E; border-radius: 12px; padding: 18px 20px; }
-.stat-value { font-size: 30px; font-weight: 800; letter-spacing: -0.04em; }
-.stat-label { font-size: 13px; font-weight: 600; color: #F1F1F3; margin-top: 4px; }
-.stat-sub   { font-size: 11px; color: #4A4A62; margin-top: 2px; }
+.stat-card {
+  background: #111118;
+  border: 1px solid #1e1e2e;
+  border-radius: 12px;
+  padding: 18px 20px;
+}
+.stat-value {
+  font-size: 30px;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+}
+.stat-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #f1f1f3;
+  margin-top: 4px;
+}
+.stat-sub {
+  font-size: 11px;
+  color: #4a4a62;
+  margin-top: 2px;
+}
 
-.section-head  { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
-.section-title { font-size: 15px; font-weight: 700; color: #F1F1F3; }
+.section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+.section-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #f1f1f3;
+}
 
 .filter-bar {
   display: flex;
   gap: 4px;
   background: #111118;
-  border: 1px solid #1E1E2E;
+  border: 1px solid #1e1e2e;
   border-radius: 9px;
   padding: 3px;
 }
@@ -301,25 +372,34 @@ const gridStyle = computed(() => ({
   border-radius: 6px;
   border: none;
   background: transparent;
-  color: #9494A8;
+  color: #9494a8;
   font-size: 12px;
   font-weight: 400;
   cursor: pointer;
   font-family: inherit;
   transition: all 0.1s;
 }
-.filter-btn.active { background: #16161F; color: #F1F1F3; font-weight: 600; }
+.filter-btn.active {
+  background: #16161f;
+  color: #f1f1f3;
+  font-weight: 600;
+}
 
-.table-card { background: #111118; border: 1px solid #1E1E2E; border-radius: 12px; overflow: hidden; }
+.table-card {
+  background: #111118;
+  border: 1px solid #1e1e2e;
+  border-radius: 12px;
+  overflow: hidden;
+}
 
 .table-header {
   display: grid;
   grid-template-columns: 1fr 120px 100px 32px;
   padding: 10px 20px;
-  border-bottom: 1px solid #1E1E2E;
+  border-bottom: 1px solid #1e1e2e;
   font-size: 11px;
   font-weight: 700;
-  color: #4A4A62;
+  color: #4a4a62;
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
@@ -328,34 +408,93 @@ const gridStyle = computed(() => ({
   display: grid;
   padding: 14px 20px;
   cursor: pointer;
-  border-bottom: 1px solid #1E1E2E;
+  border-bottom: 1px solid #1e1e2e;
   transition: background 0.1s;
   align-items: center;
 }
-.table-row:last-child { border-bottom: none; }
-.table-row:hover      { background: #16161F; }
+.table-row:last-child {
+  border-bottom: none;
+}
+.table-row:hover {
+  background: #16161f;
+}
 
-.ticket-meta   { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
-.ticket-id     { font-family: monospace; font-size: 11px; color: #4A4A62; font-weight: 600; }
-.priority-tag  { font-size: 10px; background: #2D1218; color: #EF4444; padding: 1px 6px; border-radius: 4px; font-weight: 700; letter-spacing: 0.04em; }
-.ticket-title  { font-size: 13px; color: #F1F1F3; font-weight: 500; line-height: 1.4; }
+.ticket-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+.ticket-id {
+  font-family: monospace;
+  font-size: 11px;
+  color: #4a4a62;
+  font-weight: 600;
+}
+.priority-tag {
+  font-size: 10px;
+  background: #2d1218;
+  color: #ef4444;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+.ticket-title {
+  font-size: 13px;
+  color: #f1f1f3;
+  font-weight: 500;
+  line-height: 1.4;
+}
 
-.customer-cell { display: flex; align-items: center; gap: 7px; font-size: 12px; color: #9494A8; }
-.agent-cell    { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #9494A8; }
-.unassigned-tag { font-size: 11px; background: #1A1A2A; color: #4A4A62; padding: 2px 8px; border-radius: 4px; font-weight: 600; }
-.cell-center   { display: flex; align-items: center; }
-.cell-muted    { font-size: 12px; color: #4A4A62; display: flex; align-items: center; }
-.cell-caret    { font-size: 16px; }
+.customer-cell {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  color: #9494a8;
+}
+.agent-cell {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #9494a8;
+}
+.unassigned-tag {
+  font-size: 11px;
+  background: #1a1a2a;
+  color: #4a4a62;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-weight: 600;
+}
+.cell-center {
+  display: flex;
+  align-items: center;
+}
+.cell-muted {
+  font-size: 12px;
+  color: #4a4a62;
+  display: flex;
+  align-items: center;
+}
+.cell-caret {
+  font-size: 16px;
+}
 
 .export-btn {
   padding: 7px 14px;
-  background: #16161F;
-  border: 1px solid #1E1E2E;
+  background: #16161f;
+  border: 1px solid #1e1e2e;
   border-radius: 8px;
   font-size: 13px;
-  color: #9494A8;
+  color: #9494a8;
   text-decoration: none;
   transition: all 0.15s;
 }
-.export-btn:hover { border-color: #2A2A3E; color: #F1F1F3; }
+.export-btn:hover {
+  border-color: #2a2a3e;
+  color: #f1f1f3;
+}
 </style>
