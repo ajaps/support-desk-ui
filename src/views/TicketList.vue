@@ -32,6 +32,8 @@
       </AppTopbar>
 
       <div class="page-body">
+        <AppAlert :errors="errors" />
+
         <!-- Stats -->
         <div class="stats-grid" :class="{ 'stats-grid--4': isAgent }">
           <div class="stat-card" v-for="s in stats" :key="s.label">
@@ -130,7 +132,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from "vue";
+import { ref, computed, watch } from "vue";
 import { useRouter } from "vue-router";
 import { useAuthStore } from "@/stores/auth";
 import AppSidebar from "@/layout/AppSidebar.vue";
@@ -138,10 +140,12 @@ import AppTopbar from "@/layout/AppTopbar.vue";
 import AppButton from "@/components/AppButton.vue";
 import AppBadge from "@/components/AppBadge.vue";
 import AppAvatar from "@/components/AppAvatar.vue";
+import AppAlert from "@/components/AppAlert.vue";
 import { useQuery, useMutation } from "@vue/apollo-composable";
 import { GET_TICKETS } from "@/graphql/tickets.gql";
 import gql from "graphql-tag";
 import { AVG_RESPONSE_TIME } from "@/graphql/analytics.gql";
+import { useGraphqlErrors } from "@/composables/useGraphqlErrors";
 
 const router = useRouter();
 const auth = useAuthStore();
@@ -174,7 +178,9 @@ const EXPORT_MUTATION = gql`
   }
 `;
 
-const { result } = useQuery(GET_TICKETS, null, { fetchPolicy: "cache-and-network" });
+const { errors, captureErrors } = useGraphqlErrors();
+const { result, error: queryError } = useQuery(GET_TICKETS, null, { fetchPolicy: "cache-and-network" });
+watch(queryError, (e) => captureErrors(e));
 const { mutate: exportMutate, loading: exportLoading } =
   useMutation(EXPORT_MUTATION); // ← fix
 const { result: analytics, refetch } = useQuery(
