@@ -60,7 +60,7 @@
         </div>
       </div>
 
-      <AppButton full :disabled="loading || !email.trim() || !password.trim()" @click="handleSubmit">
+      <AppButton full :disabled="loading || !email.trim() || !password.trim() || (mode === 'register' && !name.trim())" @click="handleSubmit">
         {{ mode === 'login' ? 'Sign in' : 'Create account' }}
         <span class="btn-arrow">→</span>
       </AppButton>

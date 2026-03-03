@@ -29,9 +29,9 @@ export function useTimeAgo() {
   onUnmounted(stop)
 
   function timeAgo(date) {
+    if (!date) return "-"
     const formatedDate = new Date(date)
-    
-    if (!formatedDate) return "-"
+    if (isNaN(formatedDate.getTime())) return "-"
     now.value // establish reactivity
     return dayjs(formatedDate).fromNow()
   }

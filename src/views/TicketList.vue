@@ -62,7 +62,7 @@
 
         <!-- Table -->
         <div class="table-card">
-          <div class="table-header">
+          <div class="table-header" :style="gridStyle">
             <!-- Agent gets extra columns -->
             <span>Ticket</span>
             <span v-if="isAgent">Customer</span>
@@ -139,7 +139,9 @@ import AppButton from "@/components/AppButton.vue";
 import AppBadge from "@/components/AppBadge.vue";
 import AppAvatar from "@/components/AppAvatar.vue";
 import { useQuery, useMutation } from "@vue/apollo-composable";
+import { GET_TICKETS } from "@/graphql/tickets.gql";
 import gql from "graphql-tag";
+import { AVG_RESPONSE_TIME } from "@/graphql/analytics.gql";
 
 const router = useRouter();
 const auth = useAuthStore();
@@ -163,29 +165,6 @@ function goToTicket(id) {
   router.push(`/tickets/${id}`);
 }
 
-const TICKETS_QUERY = gql`
-  query Tickets($status: String) {
-    tickets(status: $status) {
-      totalCount
-      nodes {
-        id
-        title
-        status
-        createdAt
-        closedAt
-        customer {
-          name
-          email
-        }
-        agent {
-          name
-          email
-        }
-      }
-    }
-  }
-`;
-
 const EXPORT_MUTATION = gql`
   mutation ExportRecentlyClosedTickets {
     exportRecentlyClosedTickets(input: {}) {
@@ -195,9 +174,14 @@ const EXPORT_MUTATION = gql`
   }
 `;
 
-const { result, loading } = useQuery(TICKETS_QUERY);
+const { result } = useQuery(GET_TICKETS, null, { fetchPolicy: "cache-and-network" });
 const { mutate: exportMutate, loading: exportLoading } =
   useMutation(EXPORT_MUTATION); // ← fix
+const { result: analytics, refetch } = useQuery(
+  AVG_RESPONSE_TIME,
+  null,
+  { fetchPolicy: "cache-and-network" }
+);
 
 const tickets = computed(() => result.value?.tickets?.nodes || []);
 
@@ -264,9 +248,9 @@ const stats = computed(() =>
         },
         {
           label: "Avg Response",
-          value: "1.4h",
+          value: analytics.value ? `${analytics.value.averageAgentResponseTime}` : "N/A",
           color: "#818CF8",
-          sub: "This week",
+          sub: "This Month",
         },
       ]
     : [

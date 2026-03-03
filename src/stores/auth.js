@@ -46,10 +46,5 @@ export const useAuthStore = defineStore("auth", () => {
     localStorage.setItem("user", JSON.stringify(u));
   }
 
-  async function fetchCurrentUser() {
-    // This can be implemented if there's a query to fetch current user details
-    // For now, we rely on the user info stored in localStorage after sign-in/up
-  }
-
   return { token, user, isAuthenticated, isAgent, isCustomer, signIn, signUp, signOut };
 });

@@ -1,18 +1,26 @@
 import { gql } from "@apollo/client/core";
 
 export const GET_TICKETS = gql`
-  query GetTickets($status: String, $first: Int, $after: String) {
+  query Tickets($status: String, $first: Int, $after: String) {
     tickets(status: $status, first: $first, after: $after) {
       totalCount
       pageInfo {
-        hasNextPage
         endCursor
+        hasNextPage
       }
-      edges {
-        node {
-          id title status createdAt
-          customer { name email }
-          agent { name }
+      nodes {
+        id
+        title
+        status
+        createdAt
+        closedAt
+        customer {
+          name
+          email
+        }
+        agent {
+          name
+          email
         }
       }
     }

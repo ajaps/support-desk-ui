@@ -50,22 +50,23 @@
               <div class="attachments-label">Attachment</div>
 
               <img
+                v-if="isImageAttachment"
                 :src="ticket.fileUrl"
                 alt="attachment"
                 class="attachment-image"
               />
-            </div>
-            <!-- <div v-if="ticket.fileUrl" class="attachments">
-              <div class="attachments-label">Attachment</div>
-
               <a
+                v-else
                 :href="ticket.fileUrl"
                 target="_blank"
-                class="attachment-link"
+                rel="noopener noreferrer"
+                class="attachment-pdf"
               >
-                📎 View file
+                <span class="attachment-pdf__icon">PDF</span>
+                <span class="attachment-pdf__name">View attachment</span>
+                <span class="attachment-pdf__arrow">↗</span>
               </a>
-            </div> -->
+            </div>
           </div>
 
           <!-- Comment thread -->
@@ -105,7 +106,7 @@
               <p class="comment-body">{{ c.body }}</p>
             </div>
 
-            <div v-if="canReply" class="reply-box">
+            <div v-if="canReply && ticket.status !== 'closed'" class="reply-box">
               <AppAlert :errors="commentErrors" />
               <AppTextarea
                 v-model="reply"
@@ -199,7 +200,7 @@ const { errors: pageErrors, captureErrors: capturePageErrors } =
   useGraphqlErrors();
 const { errors: commentErrors, safeCall: commentCall } = useGraphqlErrors();
 const { errors: actionErrors, safeCall: actionCall } = useGraphqlErrors();
-const { result, error: queryError } = useQuery(GET_TICKET, {
+const { result, error: queryError, refetch } = useQuery(GET_TICKET, {
   id: route.params.id,
 });
 watch(queryError, (e) => capturePageErrors(e));
@@ -215,6 +216,10 @@ const ticket = computed(() => ({
   formatedCreatedAt: timeAgo(result.value?.ticket?.createdAt),
   fileUrl: result.value?.ticket?.fileUrl || null,
 }));
+
+const isImageAttachment = computed(() =>
+  /\.(png|jpe?g|gif|webp)(\?|$)/i.test(ticket.value.fileUrl ?? "")
+)
 
 const comments = computed(() =>
   (result.value?.ticket?.comments || []).map((c) => ({
@@ -246,7 +251,10 @@ async function postComment() {
     "createComment"
   );
   submitting.value = false;
-  if (!commentErrors.value.length) reply.value = "";
+  if (!commentErrors.value.length) {
+    reply.value = "";
+    refetch();
+  }
 }
 
 const { mutate: closeTicket } = useMutation(CLOSE_TICKET);
@@ -255,7 +263,7 @@ const { mutate: assignTicket } = useMutation(ASSIGN_TICKET);
 async function updateTicketStatus(status) {
   if (status === "closed") {
     await closeTicket({ ticketId: ticket.value.id });
-    ticket.value.status = status; // optimistic update
+    refetch()
   }
 }
 
@@ -264,8 +272,6 @@ async function assignToSelf() {
     () => assignTicket({ ticketId: ticket.value.id }),
     "assignTicket"
   );
-
-  ticket.value.agent = { name: auth.user.name }; // optimistic update
 }
 
 // --- Sidebar meta rows ---
@@ -363,13 +369,6 @@ const metaRows = computed(() => [
   letter-spacing: 0.06em;
   margin-bottom: 8px;
 }
-.attachment-link {
-  display: inline-block;
-  font-size: 13px;
-  color: #818cf8;
-  margin-right: 12px;
-  text-decoration: none;
-}
 .attachment-image {
   max-width: 100%;
   max-height: 320px;
@@ -378,8 +377,39 @@ const metaRows = computed(() => [
   object-fit: contain;
   border: 1px solid #1e1e2e;
 }
-.attachment-link:hover {
-  text-decoration: underline;
+.attachment-pdf {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 10px;
+  padding: 12px 16px;
+  background: #16161f;
+  border: 1px solid #1e1e2e;
+  border-radius: 10px;
+  text-decoration: none;
+  transition: border-color 0.15s;
+}
+.attachment-pdf:hover {
+  border-color: #6366f1;
+}
+.attachment-pdf__icon {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: #ef4444;
+  background: #2d1218;
+  padding: 3px 6px;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+.attachment-pdf__name {
+  font-size: 13px;
+  color: #9494a8;
+  flex: 1;
+}
+.attachment-pdf__arrow {
+  font-size: 14px;
+  color: #4a4a62;
 }
 
 .thread-header {
