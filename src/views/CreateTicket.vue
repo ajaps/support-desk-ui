@@ -1,6 +1,6 @@
 <template>
   <div class="page">
-    <AppTopbar title="New Ticket" subtitle="Submit a support request" show-logo>
+    <AppTopbar title="New Ticket" subtitle="Submit a support request">
       <template #actions>
         <AppButton variant="ghost" sm @click="router.back()"
           >← Cancel</AppButton
@@ -281,5 +281,29 @@ async function submit() {
   justify-content: flex-end;
   gap: 10px;
   padding-top: 4px;
+  flex-wrap: wrap;
+}
+
+/* ── Responsive ──────────────────────────────── */
+@media (max-width: 768px) {
+  .form-wrap {
+    margin: 20px auto;
+    padding: 0 16px;
+  }
+
+  .form-card {
+    padding: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .form-footer {
+    flex-direction: column;
+  }
+
+  .form-footer > div {
+    width: 100%;
+    justify-content: stretch;
+  }
 }
 </style>

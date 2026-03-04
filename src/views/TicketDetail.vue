@@ -6,7 +6,6 @@
       <AppTopbar
         :title="ticket.id"
         subtitle="Ticket detail"
-        :show-logo="!isAgent"
       >
         <template #actions>
           <!-- Agent only: status updater + assign button -->
@@ -553,5 +552,43 @@ const metaRows = computed(() => [
 }
 .status-select:focus {
   border-color: #6366f1;
+}
+
+/* ── Responsive ──────────────────────────────── */
+@media (max-width: 768px) {
+  .page {
+    flex-direction: column;
+  }
+
+  .detail-body {
+    grid-template-columns: 1fr;
+    padding: 16px;
+    gap: 16px;
+  }
+
+  .detail-sidebar {
+    order: -1;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+
+  .card {
+    padding: 18px;
+  }
+
+  .comment-body {
+    padding-left: 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .detail-sidebar {
+    grid-template-columns: 1fr;
+  }
+
+  .ticket-title {
+    font-size: 16px;
+  }
 }
 </style>

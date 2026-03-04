@@ -11,7 +11,6 @@
       <AppTopbar
         :title="isAgent ? 'Dashboard' : 'My Tickets'"
         :subtitle="isAgent ? today : 'Track and manage your support requests'"
-        :show-logo="!isAgent"
       >
         <template #actions>
           <!-- Agent only: CSV export -->
@@ -27,7 +26,6 @@
           <AppButton v-if="isCustomer" sm @click="router.push('/tickets/new')">
             <span class="plus">+</span> New ticket
           </AppButton>
-          <AppButton variant="ghost" sm @click="logout">Sign out</AppButton>
         </template>
       </AppTopbar>
 
@@ -159,11 +157,6 @@ const today = new Date().toLocaleDateString("en-US", {
   month: "long",
   year: "numeric",
 });
-
-function logout() {
-  auth.signOut();
-  router.push("/login");
-}
 
 function goToTicket(id) {
   router.push(`/tickets/${id}`);
@@ -482,9 +475,71 @@ const gridStyle = computed(() => ({
   color: #9494a8;
   text-decoration: none;
   transition: all 0.15s;
+  white-space: nowrap;
 }
 .export-btn:hover {
   border-color: #2a2a3e;
   color: #f1f1f3;
+}
+
+/* ── Responsive ──────────────────────────────── */
+@media (max-width: 900px) {
+  .stats-grid--4 {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .page {
+    flex-direction: column;
+  }
+
+  .page-body {
+    padding: 16px;
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+
+  .stats-grid--4 {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+
+  .section-head {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  /* Table: hide header, show rows as cards */
+  .table-header {
+    display: none !important;
+  }
+
+  .table-row {
+    display: flex !important;
+    flex-direction: column;
+    gap: 6px;
+    align-items: flex-start;
+    padding: 14px 16px;
+  }
+
+  .cell-muted.cell-caret {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .stats-grid,
+  .stats-grid--4 {
+    grid-template-columns: 1fr !important;
+  }
+
+  .stat-value {
+    font-size: 24px;
+  }
 }
 </style>

@@ -53,13 +53,22 @@ const navItems = [
 <style scoped>
 .sidebar {
   width: 220px;
-  min-height: 100vh;
+  min-height: calc(100vh - 56px);
   background: #111118;
   border-right: 1px solid #1E1E2E;
   display: flex;
   flex-direction: column;
   padding: 24px 0;
   flex-shrink: 0;
+  position: sticky;
+  top: 56px;
+  align-self: flex-start;
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    display: none;
+  }
 }
 
 .sidebar-logo {

@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, provide } from "vue";
+import { provide } from "vue";
 import { useAuthStore } from "./stores/auth";
 import NavigationBar from "./components/NavigationBar.vue";
 import { DefaultApolloClient } from "@vue/apollo-composable";
@@ -11,11 +11,17 @@ const authStore = useAuthStore();
 </script>
 
 <template>
-  <div class="min-h-screen bg-gray-50">
+  <div class="app-root">
     <NavigationBar v-if="authStore.isAuthenticated" />
     <router-view />
   </div>
 </template>
 
 <style scoped>
+.app-root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: #0a0a0f;
+}
 </style>

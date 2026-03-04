@@ -104,7 +104,7 @@ async function handleSubmit() {
   loading.value = true
   const mutationKey = mode.value === 'login' ? 'signIn' : 'signUp'
 
-  const result = await safeCall(
+  await safeCall(
     () => mode.value === 'login'
       ? auth.signIn(email.value, password.value)
       : auth.signUp(name.value, email.value, password.value, role.value),
@@ -154,7 +154,8 @@ async function handleSubmit() {
 
 .auth-card {
   position: relative;
-  width: 420px;
+  width: 100%;
+  max-width: 420px;
   z-index: 1;
   background: #111118;
   border: 1px solid #1E1E2E;
