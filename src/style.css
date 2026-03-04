@@ -1,3 +1,4 @@
+/* ── Base reset ─────────────────────────────── */
 *, *::before, *::after {
   box-sizing: border-box;
 }
@@ -10,8 +11,8 @@ html, body {
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;
-  background: #0a0a0f;
-  color: #F1F1F3;
+  background: var(--bg-base);
+  color: var(--text-primary);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -30,4 +31,117 @@ a {
 button {
   font-family: inherit;
   cursor: pointer;
+}
+
+/* ── Dark theme (default) ───────────────────── */
+:root,
+html[data-theme="dark"] {
+  --bg-base:     #0a0a0f;
+  --bg-surface:  #111118;
+  --bg-elevated: #16161F;
+
+  --border:       #1E1E2E;
+  --border-strong: #2A2A3E;
+
+  --text-primary:   #F1F1F3;
+  --text-secondary: #9494A8;
+  --text-muted:     #4A4A62;
+
+  --accent:       #6366F1;
+  --accent-hover: #818CF8;
+  --accent-bg:    rgba(99, 102, 241, 0.1);
+
+  /* Role / nav badge */
+  --accent-badge-bg:   #312E81;
+  --accent-badge-text: #818CF8;
+
+  /* Status badges */
+  --badge-open-bg:      #0C2D48;
+  --badge-open-text:    #3B82F6;
+  --badge-progress-bg:  #2D1F00;
+  --badge-progress-text: #F59E0B;
+  --badge-closed-bg:    #0A2E1F;
+  --badge-closed-text:  #10B981;
+
+  /* Alerts */
+  --alert-error-bg:      #2D0A0A;
+  --alert-error-border:  #3D1010;
+  --alert-error-text:    #FCA5A5;
+  --alert-warning-bg:    #2D1F00;
+  --alert-warning-border: #3D2D00;
+  --alert-warning-text:  #FCD34D;
+  --alert-success-bg:    #0A2E1F;
+  --alert-success-border: #103D2A;
+  --alert-success-text:  #6EE7B7;
+
+  /* Danger button */
+  --btn-danger-bg:       #2D0A0A;
+  --btn-danger-text:     #EF4444;
+  --btn-danger-border:   #3D1010;
+  --btn-danger-hover-bg: #3D1010;
+
+  /* Misc */
+  --priority-bg:    #2d1218;
+  --priority-text:  #ef4444;
+  --unassigned-bg:  #1a1a2a;
+  --unassigned-text: #4a4a62;
+  --mono-color:     #818CF8;
+  --auth-grid-color: #1E1E2E;
+  --shadow-card:    0 32px 80px rgba(0, 0, 0, 0.5);
+}
+
+/* ── Light theme ────────────────────────────── */
+html[data-theme="light"] {
+  --bg-base:     #F0F2F8;
+  --bg-surface:  #FFFFFF;
+  --bg-elevated: #E8EBF5;
+
+  --border:        #DDE2F0;
+  --border-strong: #B8C0D9;
+
+  --text-primary:   #111125;
+  --text-secondary: #5B5B7C;
+  --text-muted:     #8A8AAA;
+
+  --accent:       #6366F1;
+  --accent-hover: #4F46E5;
+  --accent-bg:    rgba(99, 102, 241, 0.08);
+
+  /* Role / nav badge */
+  --accent-badge-bg:   #EEF0FF;
+  --accent-badge-text: #6366F1;
+
+  /* Status badges */
+  --badge-open-bg:      #DBEAFE;
+  --badge-open-text:    #1D4ED8;
+  --badge-progress-bg:  #FEF3C7;
+  --badge-progress-text: #92400E;
+  --badge-closed-bg:    #D1FAE5;
+  --badge-closed-text:  #065F46;
+
+  /* Alerts */
+  --alert-error-bg:      #FEF2F2;
+  --alert-error-border:  #FECACA;
+  --alert-error-text:    #991B1B;
+  --alert-warning-bg:    #FFFBEB;
+  --alert-warning-border: #FDE68A;
+  --alert-warning-text:  #92400E;
+  --alert-success-bg:    #ECFDF5;
+  --alert-success-border: #A7F3D0;
+  --alert-success-text:  #065F46;
+
+  /* Danger button */
+  --btn-danger-bg:       #FEF2F2;
+  --btn-danger-text:     #DC2626;
+  --btn-danger-border:   #FECACA;
+  --btn-danger-hover-bg: #FEE2E2;
+
+  /* Misc */
+  --priority-bg:    #FEE2E2;
+  --priority-text:  #DC2626;
+  --unassigned-bg:  #EEF0FF;
+  --unassigned-text: #8A8AAA;
+  --mono-color:     #6366F1;
+  --auth-grid-color: #C8CEDE;
+  --shadow-card:    0 32px 80px rgba(0, 0, 0, 0.12);
 }

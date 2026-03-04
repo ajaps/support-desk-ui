@@ -213,7 +213,7 @@ async function submit() {
 <style scoped>
 .page {
   min-height: 100vh;
-  background: #0a0a0f;
+  background: var(--bg-base);
   font-family: -apple-system, BlinkMacSystemFont, "Inter", sans-serif;
 }
 .form-wrap {
@@ -223,8 +223,8 @@ async function submit() {
 }
 
 .form-card {
-  background: #111118;
-  border: 1px solid #1e1e2e;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
   border-radius: 14px;
   padding: 28px;
 }
@@ -238,24 +238,24 @@ async function submit() {
   display: block;
   font-size: 13px;
   font-weight: 500;
-  color: #9494a8;
+  color: var(--text-secondary);
   margin-bottom: 8px;
 }
 .field-label--muted {
-  color: #4a4a62;
+  color: var(--text-muted);
 }
 
 .upload-zone {
-  border: 1px dashed #2a2a3e;
+  border: 1px dashed var(--border-strong);
   border-radius: 10px;
   padding: 28px 20px;
   text-align: center;
   cursor: pointer;
-  background: #16161f;
+  background: var(--bg-elevated);
   transition: border-color 0.15s;
 }
 .upload-zone:hover {
-  border-color: #6366f1;
+  border-color: var(--accent);
 }
 .upload-icon {
   font-size: 22px;
@@ -264,15 +264,15 @@ async function submit() {
 }
 .upload-text {
   font-size: 13px;
-  color: #9494a8;
+  color: var(--text-secondary);
 }
 .upload-link {
-  color: #818cf8;
+  color: var(--accent-hover);
   font-weight: 600;
 }
 .upload-hint {
   font-size: 11px;
-  color: #4a4a62;
+  color: var(--text-muted);
   margin-top: 4px;
 }
 

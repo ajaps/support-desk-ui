@@ -121,12 +121,13 @@ async function handleSubmit() {
 <style scoped>
 .auth-root {
   min-height: 100vh;
-  background: #0A0A0F;
+  background: var(--bg-base);
   display: flex;
   align-items: center;
   justify-content: center;
   font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;
   position: relative;
+  padding: 24px 16px;
 }
 
 .auth-grid {
@@ -134,8 +135,8 @@ async function handleSubmit() {
   inset: 0;
   pointer-events: none;
   background-image:
-    linear-gradient(#1E1E2E 1px, transparent 1px),
-    linear-gradient(90deg, #1E1E2E 1px, transparent 1px);
+    linear-gradient(var(--auth-grid-color) 1px, transparent 1px),
+    linear-gradient(90deg, var(--auth-grid-color) 1px, transparent 1px);
   background-size: 40px 40px;
   opacity: 0.4;
 }
@@ -157,11 +158,11 @@ async function handleSubmit() {
   width: 100%;
   max-width: 420px;
   z-index: 1;
-  background: #111118;
-  border: 1px solid #1E1E2E;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
   border-radius: 16px;
   padding: 36px;
-  box-shadow: 0 32px 80px rgba(0,0,0,0.5);
+  box-shadow: var(--shadow-card);
 }
 
 .auth-logo {
@@ -187,31 +188,31 @@ async function handleSubmit() {
 .logo-text {
   font-weight: 800;
   font-size: 18px;
-  color: #F1F1F3;
+  color: var(--text-primary);
   letter-spacing: -0.03em;
 }
 
 .auth-heading {
   font-size: 22px;
   font-weight: 700;
-  color: #F1F1F3;
+  color: var(--text-primary);
   margin-bottom: 6px;
   letter-spacing: -0.02em;
 }
 
 .auth-sub {
   font-size: 14px;
-  color: #9494A8;
+  color: var(--text-secondary);
   margin-bottom: 28px;
 }
 
 .role-toggle {
   display: flex;
-  background: #16161F;
+  background: var(--bg-elevated);
   border-radius: 9px;
   padding: 3px;
   margin-bottom: 20px;
-  border: 1px solid #1E1E2E;
+  border: 1px solid var(--border);
 }
 
 .role-btn {
@@ -220,7 +221,7 @@ async function handleSubmit() {
   border-radius: 7px;
   border: none;
   background: transparent;
-  color: #9494A8;
+  color: var(--text-secondary);
   font-weight: 600;
   font-size: 13px;
   cursor: pointer;
@@ -229,7 +230,7 @@ async function handleSubmit() {
 }
 
 .role-btn.active {
-  background: #6366F1;
+  background: var(--accent);
   color: #fff;
 }
 
@@ -240,7 +241,8 @@ async function handleSubmit() {
   margin-bottom: 24px;
 }
 
-.auth-alert { margin-bottom: 16px;
+.auth-alert {
+  margin-bottom: 16px;
   margin-left: 4px;
   opacity: 0.8;
 }
@@ -248,14 +250,14 @@ async function handleSubmit() {
 .auth-switch {
   margin-top: 20px;
   padding-top: 20px;
-  border-top: 1px solid #1E1E2E;
+  border-top: 1px solid var(--border);
   text-align: center;
   font-size: 13px;
-  color: #9494A8;
+  color: var(--text-secondary);
 }
 
 .auth-switch-link {
-  color: #818CF8;
+  color: var(--accent-hover);
   cursor: pointer;
   font-weight: 600;
   margin-left: 4px;
@@ -263,5 +265,11 @@ async function handleSubmit() {
 
 .auth-switch-link:hover {
   text-decoration: underline;
+}
+
+@media (max-width: 480px) {
+  .auth-card {
+    padding: 24px 20px;
+  }
 }
 </style>

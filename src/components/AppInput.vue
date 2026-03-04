@@ -27,15 +27,15 @@ defineEmits(['update:modelValue'])
 .field-label {
   font-size: 13px;
   font-weight: 500;
-  color: #9494A8;
+  color: var(--text-secondary);
 }
 
 .field-input {
-  background: #16161F;
-  border: 1px solid #1E1E2E;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
   border-radius: 8px;
   padding: 10px 14px;
-  color: #F1F1F3;
+  color: var(--text-primary);
   font-size: 14px;
   outline: none;
   width: 100%;
@@ -44,6 +44,6 @@ defineEmits(['update:modelValue'])
   font-family: inherit;
 }
 
-.field-input::placeholder { color: #4A4A62; }
-.field-input:focus { border-color: #6366F1; }
+.field-input::placeholder { color: var(--text-muted); }
+.field-input:focus { border-color: var(--accent); }
 </style>

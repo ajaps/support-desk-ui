@@ -22,6 +22,6 @@ const authStore = useAuthStore();
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background: #0a0a0f;
+  background: var(--bg-base);
 }
 </style>

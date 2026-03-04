@@ -54,8 +54,8 @@ const navItems = [
 .sidebar {
   width: 220px;
   min-height: calc(100vh - 56px);
-  background: #111118;
-  border-right: 1px solid #1E1E2E;
+  background: var(--bg-surface);
+  border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
   padding: 24px 0;
@@ -76,7 +76,7 @@ const navItems = [
   align-items: center;
   gap: 10px;
   padding: 0 20px 24px;
-  border-bottom: 1px solid #1E1E2E;
+  border-bottom: 1px solid var(--border);
 }
 
 .logo-mark {
@@ -96,7 +96,7 @@ const navItems = [
 .logo-text {
   font-weight: 700;
   font-size: 15px;
-  color: #F1F1F3;
+  color: var(--text-primary);
   letter-spacing: -0.02em;
 }
 
@@ -118,19 +118,19 @@ const navItems = [
   text-decoration: none;
   font-size: 14px;
   font-weight: 400;
-  color: #9494A8;
+  color: var(--text-secondary);
   transition: all 0.1s;
 }
 
 .nav-item--indent {
   padding-left: 30px;
   font-size: 13px;
-  color: #4A4A62;
+  color: var(--text-muted);
 }
 
 .nav-item--active {
-  background: rgba(99,102,241,0.1);
-  color: #818CF8;
+  background: var(--accent-bg);
+  color: var(--accent-hover);
   font-weight: 600;
 }
 
@@ -138,8 +138,8 @@ const navItems = [
 
 .nav-badge {
   margin-left: auto;
-  background: #312E81;
-  color: #818CF8;
+  background: var(--accent-badge-bg);
+  color: var(--accent-badge-text);
   border-radius: 999px;
   padding: 1px 7px;
   font-size: 11px;
@@ -148,12 +148,12 @@ const navItems = [
 
 .sidebar-profile {
   padding: 16px 16px 0;
-  border-top: 1px solid #1E1E2E;
+  border-top: 1px solid var(--border);
   display: flex;
   align-items: center;
   gap: 10px;
 }
 
-.profile-name { font-size: 13px; font-weight: 600; color: #F1F1F3; }
-.profile-role { font-size: 11px; color: #4A4A62; margin-top: 1px; }
+.profile-name { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+.profile-role { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
 </style>
