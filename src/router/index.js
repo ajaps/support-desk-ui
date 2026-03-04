@@ -27,8 +27,14 @@ const router = createRouter({ history: createWebHistory(), routes })
 
 router.beforeEach((to) => {
   const auth = useAuthStore()
+  console.log('Guard:', {
+    path: to.path,
+    isAuthenticated: auth.isAuthenticated,
+    role: auth.user?.role,
+    isCustomer: auth.isCustomer,
+    isAgent: auth.isAgent,
+  })
   if (to.meta.requiresAuth && !auth.isAuthenticated) return '/login'
-  // Only customers can open the new-ticket form
   if (to.meta.role === 'customer' && !auth.isCustomer) return '/tickets'
 })
 
