@@ -72,11 +72,44 @@
             <span></span>
           </div>
 
-          <div
-            v-if="filteredTickets.length === 0"
-            class="text-center py-10 text-gray-500"
-          >
-            No tickets found.
+
+          <div v-if="filteredTickets.length === 0" class="empty-state">
+            <div class="empty-icon">
+              <svg v-if="isCustomer && activeFilter === 'all' && allTickets.length === 0" xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/>
+                <path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/>
+              </svg>
+              <svg v-else xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"/>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+              </svg>
+            </div>
+
+            <div class="empty-title">
+              <template v-if="isCustomer && activeFilter === 'all' && allTickets.length === 0">No tickets yet</template>
+              <template v-else-if="activeFilter !== 'all'">No {{ activeFilter }} tickets</template>
+              <template v-else>No tickets found</template>
+            </div>
+
+            <div class="empty-sub">
+              <template v-if="isCustomer && activeFilter === 'all' && allTickets.length === 0">
+                You haven't submitted any support requests yet. Create your first ticket and our team will get back to you shortly.
+              </template>
+              <template v-else-if="activeFilter !== 'all'">
+                There are no {{ activeFilter }} tickets to show right now.
+              </template>
+              <template v-else>
+                There are no tickets matching the current filter.
+              </template>
+            </div>
+
+            <AppButton
+              v-if="isCustomer && activeFilter === 'all' && allTickets.length === 0"
+              sm
+              @click="router.push('/tickets/new')"
+            >
+              <span class="plus">+</span> New ticket
+            </AppButton>
           </div>
 
           <div
@@ -480,6 +513,44 @@ const gridStyle = computed(() => ({
 .export-btn:hover {
   border-color: #2a2a3e;
   color: #f1f1f3;
+}
+
+/* ── Empty state ─────────────────────────────── */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 56px 24px;
+  text-align: center;
+  gap: 10px;
+}
+
+.empty-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+
+.empty-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.empty-sub {
+  font-size: 13px;
+  color: var(--text-muted);
+  max-width: 300px;
+  line-height: 1.6;
+  margin-bottom: 4px;
 }
 
 /* ── Responsive ──────────────────────────────── */
