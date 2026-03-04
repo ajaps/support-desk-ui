@@ -4,8 +4,8 @@
 
     <div class="page-main">
       <AppTopbar
-        :title="ticket.id"
-        subtitle="Ticket detail"
+        :title="ticket.id ? `Tik-${ticket.id}` : 'Ticket detail'"
+        subtitle="Support request"
       >
         <template #actions>
           <!-- Agent only: status updater + assign button -->
@@ -276,7 +276,7 @@ async function assignToSelf() {
 // --- Sidebar meta rows ---
 const metaRows = computed(() => [
   { label: "Status", value: ticket.value.status, isBadge: true },
-  { label: "Ticket ID", value: ticket.value.id, mono: true },
+  { label: "Ticket ID", value: ticket.value.id ? `Tik-${ticket.value.id}` : '—', mono: true },
   { label: "Opened", value: ticket.value.formatedCreatedAt },
   {
     label: "Last update",

@@ -119,15 +119,18 @@
             :style="gridStyle"
             @click="goToTicket(t.id)"
           >
-            <!-- Ticket title + meta -->
-            <div>
-              <div class="ticket-meta">
-                <span class="ticket-id">{{ t.id }}</span>
-                <span v-if="t.priority === 'high'" class="priority-tag"
-                  >HIGH</span
-                >
+            <!-- Ticket ID chip + title -->
+            <div class="ticket-cell">
+              <div class="ticket-id-row">
+                <span class="ticket-id-chip">Tik-{{ t.id }}</span>
+                <span v-if="t.priority === 'high'" class="priority-tag">HIGH</span>
               </div>
               <div class="ticket-title">{{ t.title }}</div>
+              <!-- Mobile-only: show status + date inline under title -->
+              <div class="ticket-mobile-meta">
+                <AppBadge :status="t.status" />
+                <span class="ticket-mobile-date">{{ t.created }}</span>
+              </div>
             </div>
 
             <!-- Agent only: customer column -->
@@ -435,18 +438,32 @@ const gridStyle = computed(() => ({
   background: var(--bg-elevated);
 }
 
-.ticket-meta {
+.ticket-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+.ticket-id-row {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 4px;
+  gap: 6px;
 }
-.ticket-id {
+
+.ticket-id-chip {
   font-family: monospace;
   font-size: 11px;
-  color: var(--text-muted);
-  font-weight: 600;
+  font-weight: 700;
+  color: var(--mono-color);
+  background: var(--accent-bg);
+  padding: 2px 7px;
+  border-radius: 4px;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
+
 .priority-tag {
   font-size: 10px;
   background: var(--priority-bg);
@@ -456,11 +473,20 @@ const gridStyle = computed(() => ({
   font-weight: 700;
   letter-spacing: 0.04em;
 }
+
 .ticket-title {
   font-size: 13px;
   color: var(--text-primary);
   font-weight: 500;
   line-height: 1.4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Mobile-only metadata row (status + date) shown inside the ticket cell */
+.ticket-mobile-meta {
+  display: none;
 }
 
 .customer-cell {
@@ -593,13 +619,37 @@ const gridStyle = computed(() => ({
   .table-row {
     display: flex !important;
     flex-direction: column;
-    gap: 6px;
-    align-items: flex-start;
+    gap: 0;
+    align-items: stretch;
     padding: 14px 16px;
   }
 
-  .cell-muted.cell-caret {
-    display: none;
+  /* Show mobile meta row (status + date) inside ticket cell */
+  .ticket-mobile-meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 8px;
+  }
+
+  .ticket-mobile-date {
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+
+  /* Don't truncate title on mobile */
+  .ticket-title {
+    white-space: normal;
+  }
+
+  /* Hide standalone status/date/agent/caret cells on mobile */
+  .cell-center,
+  .cell-muted,
+  .customer-cell,
+  .agent-cell,
+  .unassigned-tag,
+  .cell-caret {
+    display: none !important;
   }
 }
 
