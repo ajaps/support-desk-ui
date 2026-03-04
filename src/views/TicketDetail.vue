@@ -4,8 +4,8 @@
 
     <div class="page-main">
       <AppTopbar
-        :title="ticket.id"
-        subtitle="Ticket detail"
+        :title="ticket.id ? `Tik-${ticket.id}` : 'Ticket detail'"
+        subtitle="Support request"
       >
         <template #actions>
           <!-- Agent only: status updater + assign button -->
@@ -276,7 +276,7 @@ async function assignToSelf() {
 // --- Sidebar meta rows ---
 const metaRows = computed(() => [
   { label: "Status", value: ticket.value.status, isBadge: true },
-  { label: "Ticket ID", value: ticket.value.id, mono: true },
+  { label: "Ticket ID", value: ticket.value.id ? `Tik-${ticket.value.id}` : '—', mono: true },
   { label: "Opened", value: ticket.value.formatedCreatedAt },
   {
     label: "Last update",
@@ -296,7 +296,7 @@ const metaRows = computed(() => [
 .page {
   display: flex;
   min-height: 100vh;
-  background: #0a0a0f;
+  background: var(--bg-base);
   font-family: -apple-system, BlinkMacSystemFont, "Inter", sans-serif;
 }
 .page-main {
@@ -325,8 +325,8 @@ const metaRows = computed(() => [
 }
 
 .card {
-  background: #111118;
-  border: 1px solid #1e1e2e;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
   border-radius: 12px;
   padding: 24px;
 }
@@ -345,24 +345,24 @@ const metaRows = computed(() => [
 .ticket-title {
   font-size: 18px;
   font-weight: 700;
-  color: #f1f1f3;
+  color: var(--text-primary);
   line-height: 1.4;
   letter-spacing: -0.02em;
 }
 .ticket-desc {
   font-size: 14px;
-  color: #9494a8;
+  color: var(--text-secondary);
   line-height: 1.7;
 }
 
 .attachments {
   margin-top: 16px;
   padding-top: 16px;
-  border-top: 1px solid #1e1e2e;
+  border-top: 1px solid var(--border);
 }
 .attachments-label {
   font-size: 12px;
-  color: #4a4a62;
+  color: var(--text-muted);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.06em;
@@ -374,7 +374,7 @@ const metaRows = computed(() => [
   border-radius: 10px;
   margin-top: 10px;
   object-fit: contain;
-  border: 1px solid #1e1e2e;
+  border: 1px solid var(--border);
 }
 .attachment-pdf {
   display: flex;
@@ -382,33 +382,33 @@ const metaRows = computed(() => [
   gap: 12px;
   margin-top: 10px;
   padding: 12px 16px;
-  background: #16161f;
-  border: 1px solid #1e1e2e;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
   border-radius: 10px;
   text-decoration: none;
   transition: border-color 0.15s;
 }
 .attachment-pdf:hover {
-  border-color: #6366f1;
+  border-color: var(--accent);
 }
 .attachment-pdf__icon {
   font-size: 10px;
   font-weight: 800;
   letter-spacing: 0.04em;
-  color: #ef4444;
-  background: #2d1218;
+  color: var(--priority-text);
+  background: var(--priority-bg);
   padding: 3px 6px;
   border-radius: 4px;
   flex-shrink: 0;
 }
 .attachment-pdf__name {
   font-size: 13px;
-  color: #9494a8;
+  color: var(--text-secondary);
   flex: 1;
 }
 .attachment-pdf__arrow {
   font-size: 14px;
-  color: #4a4a62;
+  color: var(--text-muted);
 }
 
 .thread-header {
@@ -416,24 +416,24 @@ const metaRows = computed(() => [
   align-items: center;
   justify-content: space-between;
   padding: 16px 20px;
-  border-bottom: 1px solid #1e1e2e;
+  border-bottom: 1px solid var(--border);
 }
 .thread-title {
   font-size: 13px;
   font-weight: 700;
-  color: #f1f1f3;
+  color: var(--text-primary);
 }
 .thread-count {
   font-size: 12px;
-  color: #4a4a62;
+  color: var(--text-muted);
 }
 
 .comment {
   padding: 18px 20px;
-  border-bottom: 1px solid #1e1e2e;
+  border-bottom: 1px solid var(--border);
 }
 .comment--agent {
-  background: rgba(99, 102, 241, 0.03);
+  background: var(--accent-bg);
 }
 .comment--last {
   border-bottom: none;
@@ -448,28 +448,28 @@ const metaRows = computed(() => [
 .comment-author {
   font-size: 13px;
   font-weight: 600;
-  color: #f1f1f3;
+  color: var(--text-primary);
   display: flex;
   align-items: center;
   gap: 8px;
 }
 .comment-time {
   font-size: 11px;
-  color: #4a4a62;
+  color: var(--text-muted);
   display: block;
   margin-top: 1px;
 }
 .comment-body {
   font-size: 14px;
-  color: #9494a8;
+  color: var(--text-secondary);
   line-height: 1.7;
   padding-left: 38px;
 }
 
 .agent-tag {
   font-size: 10px;
-  background: #312e81;
-  color: #818cf8;
+  background: var(--accent-badge-bg);
+  color: var(--accent-badge-text);
   padding: 1px 6px;
   border-radius: 4px;
   font-weight: 700;
@@ -478,8 +478,8 @@ const metaRows = computed(() => [
 
 .reply-box {
   padding: 20px;
-  background: #16161f;
-  border-top: 1px solid #1e1e2e;
+  background: var(--bg-elevated);
+  border-top: 1px solid var(--border);
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -492,20 +492,20 @@ const metaRows = computed(() => [
 .reply-waiting {
   padding: 16px 20px;
   font-size: 13px;
-  color: #4a4a62;
-  border-top: 1px solid #1e1e2e;
+  color: var(--text-muted);
+  border-top: 1px solid var(--border);
   text-align: center;
 }
 
 .meta-card {
-  background: #111118;
-  border: 1px solid #1e1e2e;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
   border-radius: 10px;
   padding: 14px 16px;
 }
 .meta-label {
   font-size: 11px;
-  color: #4a4a62;
+  color: var(--text-muted);
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -513,37 +513,37 @@ const metaRows = computed(() => [
 }
 .meta-value {
   font-size: 13px;
-  color: #9494a8;
+  color: var(--text-secondary);
 }
 .meta-mono {
   font-family: monospace;
-  color: #818cf8;
+  color: var(--mono-color);
 }
 .meta-agent {
   display: flex;
   align-items: center;
   gap: 8px;
   font-size: 13px;
-  color: #f1f1f3;
+  color: var(--text-primary);
 }
 
 .meta-customer-name {
   font-size: 13px;
-  color: #f1f1f3;
+  color: var(--text-primary);
   font-weight: 500;
 }
 .meta-customer-email {
   font-size: 11px;
-  color: #4a4a62;
+  color: var(--text-muted);
   margin-top: 1px;
 }
 
 .status-select {
-  background: #16161f;
-  border: 1px solid #1e1e2e;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
   border-radius: 8px;
   padding: 7px 12px;
-  color: #f1f1f3;
+  color: var(--text-primary);
   font-size: 13px;
   font-family: inherit;
   cursor: pointer;
@@ -551,7 +551,7 @@ const metaRows = computed(() => [
   transition: border-color 0.15s;
 }
 .status-select:focus {
-  border-color: #6366f1;
+  border-color: var(--accent);
 }
 
 /* ── Responsive ──────────────────────────────── */

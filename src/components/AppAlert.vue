@@ -57,9 +57,9 @@ const icon = computed(() => ({ error: '⊗', warning: '⚠', success: '✓' }[pr
   border: 1px solid transparent;
 }
 
-.alert--error   { background: #2D0A0A; border-color: #3D1010; color: #FCA5A5; }
-.alert--warning { background: #2D1F00; border-color: #3D2D00; color: #FCD34D; }
-.alert--success { background: #0A2E1F; border-color: #103D2A; color: #6EE7B7; }
+.alert--error   { background: var(--alert-error-bg);   border-color: var(--alert-error-border);   color: var(--alert-error-text); }
+.alert--warning { background: var(--alert-warning-bg); border-color: var(--alert-warning-border); color: var(--alert-warning-text); }
+.alert--success { background: var(--alert-success-bg); border-color: var(--alert-success-border); color: var(--alert-success-text); }
 
 .alert-icon { font-size: 15px; flex-shrink: 0; margin-top: 1px; }
 

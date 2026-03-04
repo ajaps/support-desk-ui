@@ -22,11 +22,11 @@ defineProps({
 <style scoped>
 .topbar {
   padding: 16px 32px;
-  border-bottom: 1px solid #1E1E2E;
+  border-bottom: 1px solid var(--border);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: #111118;
+  background: var(--bg-surface);
   gap: 12px;
   min-height: 60px;
 }
@@ -41,7 +41,7 @@ defineProps({
 .topbar-title {
   font-size: 17px;
   font-weight: 700;
-  color: #F1F1F3;
+  color: var(--text-primary);
   letter-spacing: -0.02em;
   margin: 0;
   white-space: nowrap;
@@ -51,7 +51,7 @@ defineProps({
 
 .topbar-sub {
   font-size: 12px;
-  color: #9494A8;
+  color: var(--text-secondary);
   margin: 2px 0 0;
 }
 

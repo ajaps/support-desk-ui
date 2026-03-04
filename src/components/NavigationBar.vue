@@ -43,6 +43,31 @@
           <span class="user-name">{{ auth.user?.name }}</span>
           <span v-if="isAgent" class="role-badge">Agent</span>
         </div>
+
+        <!-- Theme toggle -->
+        <button
+          class="icon-btn"
+          :title="themeStore.theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'"
+          @click="themeStore.toggle()"
+        >
+          <!-- Sun (shown in dark mode → click to go light) -->
+          <svg v-if="themeStore.theme === 'dark'" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="5"/>
+            <line x1="12" y1="1" x2="12" y2="3"/>
+            <line x1="12" y1="21" x2="12" y2="23"/>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+            <line x1="1" y1="12" x2="3" y2="12"/>
+            <line x1="21" y1="12" x2="23" y2="12"/>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+          </svg>
+          <!-- Moon (shown in light mode → click to go dark) -->
+          <svg v-else xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+          </svg>
+        </button>
+
         <button class="sign-out-btn" @click="signOut">Sign out</button>
 
         <!-- Hamburger (mobile only) -->
@@ -93,7 +118,23 @@
           <div class="mobile-user-role">{{ isAgent ? 'Support Agent' : 'Customer' }}</div>
         </div>
       </div>
-      <button class="mobile-sign-out" @click="signOut">Sign out</button>
+
+      <div class="mobile-actions">
+        <button class="mobile-theme-btn" @click="themeStore.toggle()">
+          <svg v-if="themeStore.theme === 'dark'" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="5"/>
+            <line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+            <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+          </svg>
+          <svg v-else xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+          </svg>
+          {{ themeStore.theme === 'dark' ? 'Light mode' : 'Dark mode' }}
+        </button>
+        <button class="mobile-sign-out" @click="signOut">Sign out</button>
+      </div>
     </div>
   </header>
 </template>
@@ -102,10 +143,12 @@
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { useThemeStore } from '@/stores/theme'
 import AppAvatar from '@/components/AppAvatar.vue'
 
 const auth = useAuthStore()
 const router = useRouter()
+const themeStore = useThemeStore()
 
 const mobileOpen = ref(false)
 const isAgent = computed(() => auth.isAgent)
@@ -123,8 +166,8 @@ function signOut() {
   position: sticky;
   top: 0;
   z-index: 100;
-  background: #111118;
-  border-bottom: 1px solid #1E1E2E;
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border);
   width: 100%;
 }
 
@@ -162,7 +205,7 @@ function signOut() {
 .logo-text {
   font-size: 15px;
   font-weight: 700;
-  color: #F1F1F3;
+  color: var(--text-primary);
   letter-spacing: -0.02em;
 }
 
@@ -179,27 +222,27 @@ function signOut() {
   border-radius: 7px;
   font-size: 13px;
   font-weight: 500;
-  color: #9494A8;
+  color: var(--text-secondary);
   text-decoration: none;
   transition: all 0.1s;
   white-space: nowrap;
 }
 
 .nav-link:hover {
-  color: #F1F1F3;
-  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-primary);
+  background: var(--accent-bg);
 }
 
 .nav-link--active {
-  color: #818CF8;
-  background: rgba(99, 102, 241, 0.1);
+  color: var(--accent-hover);
+  background: var(--accent-bg);
 }
 
 /* Right side */
 .navbar-right {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   flex-shrink: 0;
   margin-left: auto;
 }
@@ -213,36 +256,58 @@ function signOut() {
 .user-name {
   font-size: 13px;
   font-weight: 500;
-  color: #F1F1F3;
+  color: var(--text-primary);
   white-space: nowrap;
 }
 
 .role-badge {
   font-size: 10px;
   font-weight: 700;
-  background: #312E81;
-  color: #818CF8;
+  background: var(--accent-badge-bg);
+  color: var(--accent-badge-text);
   padding: 2px 7px;
   border-radius: 999px;
   letter-spacing: 0.04em;
 }
 
+/* Icon button (theme toggle) */
+.icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.1s;
+  flex-shrink: 0;
+}
+
+.icon-btn:hover {
+  border-color: var(--border-strong);
+  color: var(--text-primary);
+  background: var(--bg-elevated);
+}
+
 .sign-out-btn {
   padding: 6px 12px;
   background: transparent;
-  border: 1px solid #1E1E2E;
+  border: 1px solid var(--border);
   border-radius: 7px;
   font-size: 12px;
   font-weight: 500;
-  color: #9494A8;
+  color: var(--text-secondary);
   cursor: pointer;
   transition: all 0.1s;
   white-space: nowrap;
 }
 
 .sign-out-btn:hover {
-  border-color: #2a2a3e;
-  color: #F1F1F3;
+  border-color: var(--border-strong);
+  color: var(--text-primary);
 }
 
 /* Hamburger */
@@ -261,7 +326,7 @@ function signOut() {
   display: block;
   width: 18px;
   height: 2px;
-  background: #9494A8;
+  background: var(--text-secondary);
   border-radius: 2px;
 }
 
@@ -270,8 +335,8 @@ function signOut() {
   display: none;
   flex-direction: column;
   padding: 10px 16px 16px;
-  border-top: 1px solid #1E1E2E;
-  background: #111118;
+  border-top: 1px solid var(--border);
+  background: var(--bg-surface);
   gap: 2px;
 }
 
@@ -281,19 +346,19 @@ function signOut() {
   border-radius: 8px;
   font-size: 14px;
   font-weight: 500;
-  color: #9494A8;
+  color: var(--text-secondary);
   text-decoration: none;
   transition: all 0.1s;
 }
 
 .mobile-link:hover {
-  color: #F1F1F3;
-  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-primary);
+  background: var(--bg-elevated);
 }
 
 .mobile-divider {
   height: 1px;
-  background: #1E1E2E;
+  background: var(--border);
   margin: 8px 0;
 }
 
@@ -307,24 +372,52 @@ function signOut() {
 .mobile-user-name {
   font-size: 13px;
   font-weight: 600;
-  color: #F1F1F3;
+  color: var(--text-primary);
 }
 
 .mobile-user-role {
   font-size: 11px;
-  color: #4A4A62;
+  color: var(--text-muted);
   margin-top: 1px;
 }
 
-.mobile-sign-out {
+.mobile-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
   margin-top: 4px;
+}
+
+.mobile-theme-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   padding: 10px 12px;
   border-radius: 8px;
   background: transparent;
-  border: 1px solid #1E1E2E;
+  border: 1px solid var(--border);
   font-size: 13px;
   font-weight: 500;
-  color: #9494A8;
+  color: var(--text-secondary);
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.1s;
+}
+
+.mobile-theme-btn:hover {
+  color: var(--text-primary);
+  border-color: var(--border-strong);
+  background: var(--bg-elevated);
+}
+
+.mobile-sign-out {
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: transparent;
+  border: 1px solid var(--border);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
   cursor: pointer;
   text-align: left;
   transition: all 0.1s;
@@ -335,11 +428,12 @@ function signOut() {
   border-color: rgba(239, 68, 68, 0.3);
 }
 
-/* Responsive breakpoints */
+/* Responsive */
 @media (max-width: 768px) {
   .navbar-nav,
   .user-name,
   .role-badge,
+  .icon-btn,
   .sign-out-btn {
     display: none;
   }

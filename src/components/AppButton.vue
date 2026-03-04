@@ -41,23 +41,23 @@ defineEmits(['click'])
 .btn--sm      { padding: 7px 14px; font-size: 13px; }
 
 .btn--primary {
-  background: #6366F1;
+  background: var(--accent);
   color: #fff;
-  box-shadow: 0 0 20px rgba(99,102,241,0.27);
+  box-shadow: 0 0 20px rgba(99, 102, 241, 0.25);
 }
-.btn--primary:not(:disabled):hover { background: #818CF8; }
+.btn--primary:not(:disabled):hover { background: var(--accent-hover); }
 
 .btn--ghost {
   background: transparent;
-  color: #9494A8;
-  border: 1px solid #1E1E2E;
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
 }
-.btn--ghost:not(:disabled):hover { border-color: #2A2A3E; color: #F1F1F3; }
+.btn--ghost:not(:disabled):hover { border-color: var(--border-strong); color: var(--text-primary); }
 
 .btn--danger {
-  background: #2D0A0A;
-  color: #EF4444;
-  border: 1px solid #3D1010;
+  background: var(--btn-danger-bg);
+  color: var(--btn-danger-text);
+  border: 1px solid var(--btn-danger-border);
 }
-.btn--danger:not(:disabled):hover { background: #3D1010; }
+.btn--danger:not(:disabled):hover { background: var(--btn-danger-hover-bg); }
 </style>

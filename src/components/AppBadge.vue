@@ -38,12 +38,8 @@ const label = computed(() => ({
   flex-shrink: 0;
 }
 
-.badge--open        { background: #0C2D48; color: #3B82F6; }
-.badge--open        .badge-dot { background: #3B82F6; }
-
-.badge--in_progress { background: #2D1F00; color: #F59E0B; }
-.badge--in_progress .badge-dot { background: #F59E0B; }
-
-.badge--closed      { background: #0A2E1F; color: #10B981; }
-.badge--closed      .badge-dot { background: #10B981; }
+.badge--open        { background: var(--badge-open-bg);      color: var(--badge-open-text); }
+.badge--in_progress { background: var(--badge-progress-bg);  color: var(--badge-progress-text); }
+.badge--closed      { background: var(--badge-closed-bg);    color: var(--badge-closed-text); }
+.badge-dot          { background: currentColor; }
 </style>

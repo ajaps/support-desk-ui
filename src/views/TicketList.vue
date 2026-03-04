@@ -119,15 +119,18 @@
             :style="gridStyle"
             @click="goToTicket(t.id)"
           >
-            <!-- Ticket title + meta -->
-            <div>
-              <div class="ticket-meta">
-                <span class="ticket-id">{{ t.id }}</span>
-                <span v-if="t.priority === 'high'" class="priority-tag"
-                  >HIGH</span
-                >
+            <!-- Ticket ID chip + title -->
+            <div class="ticket-cell">
+              <div class="ticket-id-row">
+                <span class="ticket-id-chip">Tik-{{ t.id }}</span>
+                <span v-if="t.priority === 'high'" class="priority-tag">HIGH</span>
               </div>
               <div class="ticket-title">{{ t.title }}</div>
+              <!-- Mobile-only: show status + date inline under title -->
+              <div class="ticket-mobile-meta">
+                <AppBadge :status="t.status" />
+                <span class="ticket-mobile-date">{{ t.created }}</span>
+              </div>
             </div>
 
             <!-- Agent only: customer column -->
@@ -313,7 +316,7 @@ const gridStyle = computed(() => ({
 .page {
   display: flex;
   min-height: 100vh;
-  background: #0a0a0f;
+  background: var(--bg-base);
   font-family: -apple-system, BlinkMacSystemFont, "Inter", sans-serif;
 }
 .page-main {
@@ -341,8 +344,8 @@ const gridStyle = computed(() => ({
 }
 
 .stat-card {
-  background: #111118;
-  border: 1px solid #1e1e2e;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
   border-radius: 12px;
   padding: 18px 20px;
 }
@@ -354,12 +357,12 @@ const gridStyle = computed(() => ({
 .stat-label {
   font-size: 13px;
   font-weight: 600;
-  color: #f1f1f3;
+  color: var(--text-primary);
   margin-top: 4px;
 }
 .stat-sub {
   font-size: 11px;
-  color: #4a4a62;
+  color: var(--text-muted);
   margin-top: 2px;
 }
 
@@ -372,14 +375,14 @@ const gridStyle = computed(() => ({
 .section-title {
   font-size: 15px;
   font-weight: 700;
-  color: #f1f1f3;
+  color: var(--text-primary);
 }
 
 .filter-bar {
   display: flex;
   gap: 4px;
-  background: #111118;
-  border: 1px solid #1e1e2e;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
   border-radius: 9px;
   padding: 3px;
 }
@@ -388,7 +391,7 @@ const gridStyle = computed(() => ({
   border-radius: 6px;
   border: none;
   background: transparent;
-  color: #9494a8;
+  color: var(--text-secondary);
   font-size: 12px;
   font-weight: 400;
   cursor: pointer;
@@ -396,14 +399,14 @@ const gridStyle = computed(() => ({
   transition: all 0.1s;
 }
 .filter-btn.active {
-  background: #16161f;
-  color: #f1f1f3;
+  background: var(--bg-elevated);
+  color: var(--text-primary);
   font-weight: 600;
 }
 
 .table-card {
-  background: #111118;
-  border: 1px solid #1e1e2e;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
   border-radius: 12px;
   overflow: hidden;
 }
@@ -412,10 +415,10 @@ const gridStyle = computed(() => ({
   display: grid;
   grid-template-columns: 1fr 120px 100px 32px;
   padding: 10px 20px;
-  border-bottom: 1px solid #1e1e2e;
+  border-bottom: 1px solid var(--border);
   font-size: 11px;
   font-weight: 700;
-  color: #4a4a62;
+  color: var(--text-muted);
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
@@ -424,7 +427,7 @@ const gridStyle = computed(() => ({
   display: grid;
   padding: 14px 20px;
   cursor: pointer;
-  border-bottom: 1px solid #1e1e2e;
+  border-bottom: 1px solid var(--border);
   transition: background 0.1s;
   align-items: center;
 }
@@ -432,35 +435,58 @@ const gridStyle = computed(() => ({
   border-bottom: none;
 }
 .table-row:hover {
-  background: #16161f;
+  background: var(--bg-elevated);
 }
 
-.ticket-meta {
+.ticket-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+.ticket-id-row {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 4px;
+  gap: 6px;
 }
-.ticket-id {
+
+.ticket-id-chip {
   font-family: monospace;
   font-size: 11px;
-  color: #4a4a62;
-  font-weight: 600;
+  font-weight: 700;
+  color: var(--mono-color);
+  background: var(--accent-bg);
+  padding: 2px 7px;
+  border-radius: 4px;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
+
 .priority-tag {
   font-size: 10px;
-  background: #2d1218;
-  color: #ef4444;
+  background: var(--priority-bg);
+  color: var(--priority-text);
   padding: 1px 6px;
   border-radius: 4px;
   font-weight: 700;
   letter-spacing: 0.04em;
 }
+
 .ticket-title {
   font-size: 13px;
-  color: #f1f1f3;
+  color: var(--text-primary);
   font-weight: 500;
   line-height: 1.4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Mobile-only metadata row (status + date) shown inside the ticket cell */
+.ticket-mobile-meta {
+  display: none;
 }
 
 .customer-cell {
@@ -468,19 +494,19 @@ const gridStyle = computed(() => ({
   align-items: center;
   gap: 7px;
   font-size: 12px;
-  color: #9494a8;
+  color: var(--text-secondary);
 }
 .agent-cell {
   display: flex;
   align-items: center;
   gap: 6px;
   font-size: 12px;
-  color: #9494a8;
+  color: var(--text-secondary);
 }
 .unassigned-tag {
   font-size: 11px;
-  background: #1a1a2a;
-  color: #4a4a62;
+  background: var(--unassigned-bg);
+  color: var(--unassigned-text);
   padding: 2px 8px;
   border-radius: 4px;
   font-weight: 600;
@@ -491,7 +517,7 @@ const gridStyle = computed(() => ({
 }
 .cell-muted {
   font-size: 12px;
-  color: #4a4a62;
+  color: var(--text-muted);
   display: flex;
   align-items: center;
 }
@@ -501,18 +527,18 @@ const gridStyle = computed(() => ({
 
 .export-btn {
   padding: 7px 14px;
-  background: #16161f;
-  border: 1px solid #1e1e2e;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
   border-radius: 8px;
   font-size: 13px;
-  color: #9494a8;
+  color: var(--text-secondary);
   text-decoration: none;
   transition: all 0.15s;
   white-space: nowrap;
 }
 .export-btn:hover {
-  border-color: #2a2a3e;
-  color: #f1f1f3;
+  border-color: var(--border-strong);
+  color: var(--text-primary);
 }
 
 /* ── Empty state ─────────────────────────────── */
@@ -593,13 +619,37 @@ const gridStyle = computed(() => ({
   .table-row {
     display: flex !important;
     flex-direction: column;
-    gap: 6px;
-    align-items: flex-start;
+    gap: 0;
+    align-items: stretch;
     padding: 14px 16px;
   }
 
-  .cell-muted.cell-caret {
-    display: none;
+  /* Show mobile meta row (status + date) inside ticket cell */
+  .ticket-mobile-meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 8px;
+  }
+
+  .ticket-mobile-date {
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+
+  /* Don't truncate title on mobile */
+  .ticket-title {
+    white-space: normal;
+  }
+
+  /* Hide standalone status/date/agent/caret cells on mobile */
+  .cell-center,
+  .cell-muted,
+  .customer-cell,
+  .agent-cell,
+  .unassigned-tag,
+  .cell-caret {
+    display: none !important;
   }
 }
 
