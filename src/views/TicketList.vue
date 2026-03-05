@@ -87,7 +87,7 @@
 
             <div class="empty-title">
               <template v-if="isCustomer && activeFilter === 'all' && allTickets.length === 0">No tickets yet</template>
-              <template v-else-if="activeFilter !== 'all'">No {{ activeFilter }} tickets</template>
+              <template v-else-if="activeFilter !== 'all'">No {{ activeFilterLabel }} tickets</template>
               <template v-else>No tickets found</template>
             </div>
 
@@ -96,7 +96,7 @@
                 You haven't submitted any support requests yet. Create your first ticket and our team will get back to you shortly.
               </template>
               <template v-else-if="activeFilter !== 'all'">
-                There are no {{ activeFilter }} tickets to show right now.
+                There are no {{ activeFilterLabel }} tickets to show right now.
               </template>
               <template v-else>
                 There are no tickets matching the current filter.
@@ -159,6 +159,13 @@
             <!-- Caret -->
             <div class="cell-muted cell-caret">›</div>
           </div>
+
+          <!-- Load More -->
+          <div v-if="hasNextPage" class="load-more-row">
+            <AppButton sm ghost :disabled="loading" @click="loadMore">
+              {{ loading ? 'Loading…' : 'Load more' }}
+            </AppButton>
+          </div>
         </div>
       </div>
     </div>
@@ -167,7 +174,7 @@
 
 <script setup>
 import { ref, computed, watch } from "vue";
-import { useRouter } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { useAuthStore } from "@/stores/auth";
 import AppSidebar from "@/layout/AppSidebar.vue";
 import AppTopbar from "@/layout/AppTopbar.vue";
@@ -176,11 +183,12 @@ import AppBadge from "@/components/AppBadge.vue";
 import AppAvatar from "@/components/AppAvatar.vue";
 import AppAlert from "@/components/AppAlert.vue";
 import { useQuery, useMutation } from "@vue/apollo-composable";
-import { GET_TICKETS } from "@/graphql/tickets.gql";
+import { GET_TICKETS, GET_TICKET_COUNTS } from "@/graphql/tickets.gql";
 import gql from "graphql-tag";
 import { AVG_RESPONSE_TIME } from "@/graphql/analytics.gql";
 import { useGraphqlErrors } from "@/composables/useGraphqlErrors";
 
+const route = useRoute();
 const router = useRouter();
 const auth = useAuthStore();
 
@@ -207,18 +215,69 @@ const EXPORT_MUTATION = gql`
   }
 `;
 
+const PAGE_SIZE = 10;
+
 const { errors, captureErrors } = useGraphqlErrors();
-const { result, error: queryError } = useQuery(GET_TICKETS, null, { fetchPolicy: "cache-and-network" });
+
+// Pagination state
+const currentCursor = ref(null);
+const accumulatedNodes = ref([]);
+
+const activeFilter = ref(route.query.status || "all");
+
+const queryVariables = computed(() => ({
+  first: PAGE_SIZE,
+  after: currentCursor.value,
+  status: activeFilter.value === "all" ? null : activeFilter.value,
+}));
+
+const { result, loading, error: queryError } = useQuery(GET_TICKETS, queryVariables, { fetchPolicy: "no-cache" });
+
 watch(queryError, (e) => captureErrors(e));
+
+// Accumulate nodes across pages; reset when cursor is null (filter change or initial load)
+watch(result, (newResult) => {
+  const newNodes = newResult?.tickets?.nodes || [];
+  if (currentCursor.value === null) {
+    accumulatedNodes.value = newNodes;
+  } else {
+    accumulatedNodes.value = [...accumulatedNodes.value, ...newNodes];
+  }
+});
+
+// Reset on filter change
+watch(activeFilter, () => {
+  currentCursor.value = null;
+  accumulatedNodes.value = [];
+});
+
+// Sync filter when navbar/sidebar navigate with ?status=…
+watch(() => route.query.status, (status) => {
+  activeFilter.value = status || "all";
+});
+
+const pageInfo = computed(() => result.value?.tickets?.pageInfo);
+const hasNextPage = computed(() => pageInfo.value?.hasNextPage ?? false);
+
+function loadMore() {
+  if (!hasNextPage.value || loading.value) return;
+  currentCursor.value = pageInfo.value.endCursor;
+}
+
 const { mutate: exportMutate, loading: exportLoading } =
-  useMutation(EXPORT_MUTATION); // ← fix
-const { result: analytics, refetch } = useQuery(
+  useMutation(EXPORT_MUTATION);
+const { result: analytics } = useQuery(
   AVG_RESPONSE_TIME,
   null,
   { fetchPolicy: "cache-and-network" }
 );
 
-const tickets = computed(() => result.value?.tickets?.nodes || []);
+// Separate count query — accurate regardless of current filter / page
+const { result: countsResult } = useQuery(GET_TICKET_COUNTS, null, { fetchPolicy: "cache-and-network" });
+const openTicketsCount = computed(() => countsResult.value?.open?.totalCount ?? 0);
+const closedTicketsCount = computed(() => countsResult.value?.closed?.totalCount ?? 0);
+
+const tickets = computed(() => accumulatedNodes.value);
 
 const allTickets = computed(() =>
   tickets.value.map((t) => ({
@@ -229,13 +288,6 @@ const allTickets = computed(() =>
     agent: t.agent ? t.agent.name : null,
     created: formatDate(t.createdAt),
   }))
-);
-
-const openTicketsCount = computed(
-  () => tickets.value.filter((t) => t.status === "open").length
-);
-const closedTicketsCount = computed(
-  () => tickets.value.filter((t) => t.status === "closed").length
 );
 
 const formatDate = (date) => new Date(date).toLocaleDateString();
@@ -254,17 +306,28 @@ const exportCSV = async () => {
   }
 };
 
-const activeFilter = ref("all");
-const filters = [
-  { label: "All", value: "all" },
-  { label: "Open", value: "open" },
-  { label: "Closed", value: "closed" },
-];
+const filters = computed(() =>
+  isAgent.value
+    ? [
+        { label: "All",              value: "all" },
+        { label: "Open",             value: "open" },
+        { label: "Awaiting Agent",   value: "awaiting_agent" },
+        { label: "Awaiting Customer", value: "awaiting_customer" },
+        { label: "Closed",           value: "closed" },
+      ]
+    : [
+        { label: "All",    value: "all" },
+        { label: "Open",   value: "open" },
+        { label: "Closed", value: "closed" },
+      ]
+);
 
-const filteredTickets = computed(() => {
-  if (activeFilter.value === "all") return allTickets.value;
-  return allTickets.value.filter((t) => t.status === activeFilter.value);
-});
+// Server handles status filtering; no client-side filter needed
+const filteredTickets = computed(() => allTickets.value);
+
+const activeFilterLabel = computed(() =>
+  filters.value.find((f) => f.value === activeFilter.value)?.label.toLowerCase() ?? activeFilter.value
+);
 
 const stats = computed(() =>
   isAgent.value
@@ -289,7 +352,7 @@ const stats = computed(() =>
         },
       ]
     : [
-        { label: "Total", value: allTickets.value.length, sub: "All time" },
+        { label: "Total", value: openTicketsCount.value + closedTicketsCount.value, sub: "All time" },
         {
           label: "Open",
           value: openTicketsCount.value,
@@ -307,8 +370,8 @@ const stats = computed(() =>
 
 const gridStyle = computed(() => ({
   gridTemplateColumns: isAgent.value
-    ? "1fr 130px 110px 120px 80px 32px"
-    : "1fr 120px 100px 32px",
+    ? "1fr 130px 160px 120px 80px 32px"
+    : "1fr 160px 100px 32px",
 }));
 </script>
 
@@ -431,6 +494,12 @@ const gridStyle = computed(() => ({
   transition: background 0.1s;
   align-items: center;
 }
+
+/* Prevent any cell from busting its column boundary */
+.table-row > * {
+  min-width: 0;
+  overflow: hidden;
+}
 .table-row:last-child {
   border-bottom: none;
 }
@@ -496,12 +565,22 @@ const gridStyle = computed(() => ({
   font-size: 12px;
   color: var(--text-secondary);
 }
+.customer-cell span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .agent-cell {
   display: flex;
   align-items: center;
   gap: 6px;
   font-size: 12px;
   color: var(--text-secondary);
+}
+.agent-cell span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .unassigned-tag {
   font-size: 11px;
@@ -514,12 +593,16 @@ const gridStyle = computed(() => ({
 .cell-center {
   display: flex;
   align-items: center;
+  overflow: hidden;
 }
 .cell-muted {
   font-size: 12px;
   color: var(--text-muted);
   display: flex;
   align-items: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .cell-caret {
   font-size: 16px;
@@ -539,6 +622,14 @@ const gridStyle = computed(() => ({
 .export-btn:hover {
   border-color: var(--border-strong);
   color: var(--text-primary);
+}
+
+/* ── Load more ───────────────────────────────── */
+.load-more-row {
+  display: flex;
+  justify-content: center;
+  padding: 16px;
+  border-top: 1px solid var(--border);
 }
 
 /* ── Empty state ─────────────────────────────── */

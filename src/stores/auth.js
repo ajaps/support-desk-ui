@@ -21,10 +21,10 @@ export const useAuthStore = defineStore("auth", () => {
     _persist(result.token, result.user);
   }
 
-  async function signUp(name, email, password, role = "customer") {
+  async function signUp(name, email, password) {
     const { data } = await apolloClient.mutate({
       mutation: SIGN_UP,
-      variables: { name, email, password, role },
+      variables: { name, email, password },
     });
     const result = data.signUp;
     if (result.errors.length) throw new Error(result.errors[0]);

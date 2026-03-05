@@ -18,6 +18,8 @@
               @change="updateTicketStatus($event.target.value)"
             >
               <option value="open">Open</option>
+              <option value="awaiting_agent" disabled>Awaiting Agent</option>
+              <option value="awaiting_customer" disabled>Awaiting Customer</option>
               <option value="closed">Closed</option>
             </select>
             <AppButton v-if="!ticket.agent" sm @click="assignToSelf">
@@ -33,7 +35,21 @@
 
       <AppAlert :errors="actionErrors" class="auth-alert" />
 
-      <div class="detail-body">
+      <!-- Not found / not authorized error state -->
+      <div v-if="ticketNotFound" class="error-state">
+        <div class="error-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" width="28" height="28">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="8" x2="12" y2="12"/>
+            <line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+        </div>
+        <div class="error-title">Ticket not found</div>
+        <div class="error-sub">This ticket doesn't exist or you don't have permission to view it.</div>
+        <AppButton sm @click="router.push('/tickets')">← Back to tickets</AppButton>
+      </div>
+
+      <div v-else-if="!ticketNotFound && ticket.id" class="detail-body">
         <!-- Main column -->
         <div class="detail-main">
           <!-- Ticket card -->
@@ -105,28 +121,44 @@
               <p class="comment-body">{{ c.body }}</p>
             </div>
 
-            <div v-if="canReply && ticket.status !== 'closed'" class="reply-box">
-              <AppAlert :errors="commentErrors" />
-              <AppTextarea
-                v-model="reply"
-                placeholder="Write a reply…"
-                :rows="3"
-              />
-              <div class="reply-footer">
-                <AppButton
-                  :disabled="!reply.trim() || submitting"
-                  sm
-                  @click="postComment"
-                >
-                  {{ submitting ? "Sending…" : "Send reply" }}
-                </AppButton>
-              </div>
-            </div>
-
             <!-- Customer waiting message -->
-            <div v-else-if="isCustomer" class="reply-waiting">
+            <div v-if="isCustomer && !agentHasCommented" class="reply-waiting">
               Replies will be available once a support agent responds.
             </div>
+          </div>
+
+          <!-- Reply card — separated from thread for visibility -->
+          <div v-if="canReply && ticket.status !== 'closed'" class="reply-card">
+            <div class="reply-card-header">
+              <svg class="reply-card-icon" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M2 5a2 2 0 012-2h12a2 2 0 012 2v7a2 2 0 01-2 2H6l-4 3V5z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+              </svg>
+              <div>
+                <div class="reply-card-label">Add a reply</div>
+                <div v-if="isAgent" class="reply-card-hint">Your reply will be sent to the customer</div>
+              </div>
+            </div>
+            <AppAlert :errors="commentErrors" />
+            <AppTextarea
+              v-model="reply"
+              placeholder="Write your reply…"
+              :rows="4"
+            />
+            <div class="reply-footer">
+              <AppButton
+                :disabled="!reply.trim() || submitting"
+                @click="postComment"
+              >
+                {{ submitting ? "Sending…" : "Send reply" }}
+              </AppButton>
+            </div>
+          </div>
+
+          <div v-else-if="ticket.status === 'closed'" class="reply-closed">
+            <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" width="16" height="16">
+              <path d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2z" stroke="currentColor" stroke-width="1.5"/>
+            </svg>
+            This ticket is closed. Reopen it to add replies.
           </div>
         </div>
 
@@ -199,10 +231,16 @@ const { errors: pageErrors, captureErrors: capturePageErrors } =
   useGraphqlErrors();
 const { errors: commentErrors, safeCall: commentCall } = useGraphqlErrors();
 const { errors: actionErrors, safeCall: actionCall } = useGraphqlErrors();
-const { result, error: queryError, refetch } = useQuery(GET_TICKET, {
+const { result, loading: ticketLoading, error: queryError, refetch } = useQuery(GET_TICKET, {
   id: route.params.id,
 });
 watch(queryError, (e) => capturePageErrors(e));
+
+// True once the query has settled and no ticket was returned (not found / not authorized)
+const ticketNotFound = computed(() =>
+  !ticketLoading.value && result.value != null && !result.value?.ticket
+  || (pageErrors.value.length > 0)
+);
 
 const ticket = computed(() => ({
   id: result.value?.ticket?.id,
@@ -304,6 +342,44 @@ const metaRows = computed(() => [
   display: flex;
   flex-direction: column;
   min-width: 0;
+}
+
+.error-state {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 80px 24px;
+  text-align: center;
+}
+
+.error-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 16px;
+  background: var(--alert-error-bg);
+  border: 1px solid var(--alert-error-border);
+  color: var(--alert-error-text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 4px;
+}
+
+.error-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.error-sub {
+  font-size: 14px;
+  color: var(--text-muted);
+  max-width: 320px;
+  line-height: 1.6;
+  margin-bottom: 4px;
 }
 
 .detail-body {
@@ -476,25 +552,65 @@ const metaRows = computed(() => [
   letter-spacing: 0.04em;
 }
 
-.reply-box {
-  padding: 20px;
-  background: var(--bg-elevated);
-  border-top: 1px solid var(--border);
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-.reply-footer {
-  display: flex;
-  justify-content: flex-end;
-}
-
 .reply-waiting {
   padding: 16px 20px;
   font-size: 13px;
   color: var(--text-muted);
   border-top: 1px solid var(--border);
   text-align: center;
+}
+
+.reply-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: 12px;
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.reply-card-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.reply-card-icon {
+  width: 20px;
+  height: 20px;
+  color: var(--accent);
+  flex-shrink: 0;
+}
+
+.reply-card-label {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.reply-card-hint {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.reply-footer {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.reply-closed {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 18px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-size: 13px;
+  color: var(--text-muted);
 }
 
 .meta-card {

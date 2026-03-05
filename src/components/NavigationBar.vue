@@ -10,26 +10,26 @@
       <!-- Desktop nav links -->
       <nav class="navbar-nav">
         <template v-if="isCustomer">
-          <router-link to="/tickets" class="nav-link" active-class="nav-link--active">
+          <router-link to="/tickets" :class="['nav-link', { 'nav-link--active': isNavActive(null, '/tickets') }]">
             My Tickets
           </router-link>
-          <router-link to="/tickets/new" class="nav-link" active-class="nav-link--active">
+          <router-link to="/tickets/new" :class="['nav-link', { 'nav-link--active': route.path === '/tickets/new' }]">
             New Ticket
           </router-link>
         </template>
         <template v-if="isAgent">
-          <router-link to="/tickets" class="nav-link" active-class="nav-link--active">
+          <router-link to="/tickets" :class="['nav-link', { 'nav-link--active': isNavActive(null) }]">
             Dashboard
           </router-link>
           <router-link
             :to="{ path: '/tickets', query: { status: 'open' } }"
-            class="nav-link"
+            :class="['nav-link', { 'nav-link--active': isNavActive('open') }]"
           >
             Open
           </router-link>
           <router-link
             :to="{ path: '/tickets', query: { status: 'closed' } }"
-            class="nav-link"
+            :class="['nav-link', { 'nav-link--active': isNavActive('closed') }]"
           >
             Closed
           </router-link>
@@ -141,14 +141,22 @@
 
 <script setup>
 import { ref, computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useThemeStore } from '@/stores/theme'
 import AppAvatar from '@/components/AppAvatar.vue'
 
 const auth = useAuthStore()
+const route = useRoute()
 const router = useRouter()
 const themeStore = useThemeStore()
+
+// Returns true when the current route matches the given status filter
+function isNavActive(statusKey, path = '/tickets') {
+  if (route.path !== path) return false
+  const current = route.query.status || null
+  return current === statusKey
+}
 
 const mobileOpen = ref(false)
 const isAgent = computed(() => auth.isAgent)

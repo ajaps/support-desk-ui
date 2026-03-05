@@ -11,9 +11,11 @@ import { computed } from 'vue'
 const props = defineProps({ status: String })
 
 const label = computed(() => ({
-  open:        'Open',
-  in_progress: 'In Progress',
-  closed:      'Closed',
+  open:               'Open',
+  awaiting_agent:     'Awaiting Agent',
+  awaiting_customer:  'Awaiting Customer',
+  in_progress:        'In Progress',
+  closed:             'Closed',
 }[props.status] ?? props.status))
 </script>
 
@@ -38,8 +40,10 @@ const label = computed(() => ({
   flex-shrink: 0;
 }
 
-.badge--open        { background: var(--badge-open-bg);      color: var(--badge-open-text); }
-.badge--in_progress { background: var(--badge-progress-bg);  color: var(--badge-progress-text); }
-.badge--closed      { background: var(--badge-closed-bg);    color: var(--badge-closed-text); }
+.badge--open               { background: var(--badge-open-bg);            color: var(--badge-open-text); }
+.badge--awaiting_agent     { background: var(--badge-awaiting-agent-bg);   color: var(--badge-awaiting-agent-text); }
+.badge--awaiting_customer  { background: var(--badge-awaiting-bg);         color: var(--badge-awaiting-text); }
+.badge--in_progress        { background: var(--badge-progress-bg);         color: var(--badge-progress-text); }
+.badge--closed             { background: var(--badge-closed-bg);           color: var(--badge-closed-text); }
 .badge-dot          { background: currentColor; }
 </style>

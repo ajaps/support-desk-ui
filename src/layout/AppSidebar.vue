@@ -10,14 +10,13 @@
     <div class="sidebar-nav">
       <router-link
         v-for="item in navItems"
-        :key="item.to"
+        :key="item.label"
         :to="item.to"
-        :class="['nav-item', { 'nav-item--indent': item.indent }]"
-        active-class="nav-item--active"
+        :class="['nav-item', { 'nav-item--indent': item.indent, 'nav-item--active': isActive(item) }]"
       >
-        <span class="nav-icon">{{ item.icon }}</span>
+        <span class="nav-icon">·</span>
         {{ item.label }}
-        <span v-if="item.badge" class="nav-badge">{{ item.badge }}</span>
+        <span v-if="item.badge != null" class="nav-badge">{{ item.badge }}</span>
       </router-link>
     </div>
 
@@ -33,6 +32,8 @@
 </template>
 
 <script setup>
+import { computed } from 'vue'
+import { useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import AppAvatar from '@/components/AppAvatar.vue'
 
@@ -42,12 +43,19 @@ const props = defineProps({
 })
 
 const auth = useAuthStore()
+const route = useRoute()
 
-const navItems = [
-  { to: '/tickets',        label: 'Dashboard',   icon: '⬡' },
-  { to: '/tickets?status=open',   label: 'Open',   icon: '○', indent: true, badge: props.openTicketCount },
-  { to: '/tickets?status=closed', label: 'Closed', icon: '●', indent: true, badge: props.closedTicketCount },
-]
+const navItems = computed(() => [
+  { to: { path: '/tickets' },                                label: 'Dashboard', statusKey: null },
+  { to: { path: '/tickets', query: { status: 'open' } },    label: 'Open',      statusKey: 'open',   indent: true, badge: props.openTicketCount },
+  { to: { path: '/tickets', query: { status: 'closed' } },  label: 'Closed',    statusKey: 'closed', indent: true, badge: props.closedTicketCount },
+])
+
+function isActive(item) {
+  if (route.path !== '/tickets') return false
+  const currentStatus = route.query.status || null
+  return item.statusKey === currentStatus
+}
 </script>
 
 <style scoped>

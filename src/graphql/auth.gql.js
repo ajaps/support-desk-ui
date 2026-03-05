@@ -11,8 +11,8 @@ export const SIGN_IN = gql`
 `;
 
 export const SIGN_UP = gql`
-  mutation SignUp($name: String!, $email: String!, $password: String!, $role: String) {
-    signUp(input: { name: $name, email: $email, password: $password, role: $role }) {
+  mutation SignUp($name: String!, $email: String!, $password: String!) {
+    signUp(input: { name: $name, email: $email, password: $password }) {
       token
       user { id name email role }
       errors

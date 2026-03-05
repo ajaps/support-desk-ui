@@ -76,3 +76,10 @@ export const ASSIGN_TICKET = gql`
     }
   }
 `;
+
+export const GET_TICKET_COUNTS = gql`
+  query TicketCounts {
+    open:   tickets(status: "open")   { totalCount }
+    closed: tickets(status: "closed") { totalCount }
+  }
+`;

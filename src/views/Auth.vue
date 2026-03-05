@@ -19,17 +19,6 @@
         {{ mode === 'login' ? 'Sign in to your workspace.' : 'Get started in seconds.' }}
       </p>
 
-      <!-- Role toggle (register only) -->
-      <div v-if="mode === 'register'" class="role-toggle">
-        <button
-          v-for="r in ['customer', 'agent']" :key="r"
-          :class="['role-btn', { active: role === r }]"
-          @click="role = r"
-        >
-          {{ r === 'customer' ? 'Customer' : 'Support Agent' }}
-        </button>
-      </div>
-
       <!-- Error banner -->
       <AppAlert :errors="errors" class="auth-alert" />
 
@@ -58,9 +47,20 @@
             placeholder="••••••••"
           />
         </div>
+        <div v-if="mode === 'register'">
+          <AppInput
+            v-model="confirmPassword"
+            label="Confirm password"
+            type="password"
+            placeholder="••••••••"
+          />
+          <p v-if="confirmPassword && !passwordsMatch" class="password-mismatch">
+            Passwords do not match
+          </p>
+        </div>
       </div>
 
-      <AppButton full :disabled="loading || !email.trim() || !password.trim() || (mode === 'register' && !name.trim())" @click="handleSubmit">
+      <AppButton full :disabled="loading || !email.trim() || !password.trim() || (mode === 'register' && (!name.trim() || !passwordsMatch))" @click="handleSubmit">
         {{ mode === 'login' ? 'Sign in' : 'Create account' }}
         <span class="btn-arrow">→</span>
       </AppButton>
@@ -76,7 +76,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useGraphqlErrors } from '@/composables/useGraphqlErrors'
@@ -88,16 +88,21 @@ const router   = useRouter()
 const auth     = useAuthStore()
 const { errors, safeCall } = useGraphqlErrors()
 
-const mode     = ref('login')
-const role     = ref('customer')
-const name     = ref('')
-const email    = ref('')
-const password = ref('')
-const loading  = ref(false)
+const mode            = ref('login')
+const name            = ref('')
+const email           = ref('')
+const password        = ref('')
+const confirmPassword = ref('')
+const loading         = ref(false)
+
+const passwordsMatch = computed(
+  () => mode.value === 'login' || password.value === confirmPassword.value
+)
 
 function toggleMode() {
   mode.value = mode.value === 'login' ? 'register' : 'login'
   errors.value = []
+  confirmPassword.value = ''
 }
 
 async function handleSubmit() {
@@ -107,7 +112,7 @@ async function handleSubmit() {
   await safeCall(
     () => mode.value === 'login'
       ? auth.signIn(email.value, password.value)
-      : auth.signUp(name.value, email.value, password.value, role.value),
+      : auth.signUp(name.value, email.value, password.value),
     mutationKey
   )
 
@@ -206,34 +211,6 @@ async function handleSubmit() {
   margin-bottom: 28px;
 }
 
-.role-toggle {
-  display: flex;
-  background: var(--bg-elevated);
-  border-radius: 9px;
-  padding: 3px;
-  margin-bottom: 20px;
-  border: 1px solid var(--border);
-}
-
-.role-btn {
-  flex: 1;
-  padding: 7px 0;
-  border-radius: 7px;
-  border: none;
-  background: transparent;
-  color: var(--text-secondary);
-  font-weight: 600;
-  font-size: 13px;
-  cursor: pointer;
-  text-transform: capitalize;
-  transition: all 0.15s;
-}
-
-.role-btn.active {
-  background: var(--accent);
-  color: #fff;
-}
-
 .auth-fields {
   display: flex;
   flex-direction: column;
@@ -265,6 +242,12 @@ async function handleSubmit() {
 
 .auth-switch-link:hover {
   text-decoration: underline;
+}
+
+.password-mismatch {
+  margin: 6px 0 0;
+  font-size: 12px;
+  color: var(--alert-error-text);
 }
 
 @media (max-width: 480px) {
