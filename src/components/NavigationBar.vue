@@ -4,7 +4,7 @@
       <!-- Brand -->
       <router-link to="/tickets" class="navbar-brand">
         <div class="logo-mark">S</div>
-        <span class="logo-text">SupportDesk</span>
+        <span class="logo-text">Support Desk</span>
       </router-link>
 
       <!-- Desktop nav links -->

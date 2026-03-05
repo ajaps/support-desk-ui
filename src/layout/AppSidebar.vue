@@ -1,11 +1,5 @@
 <template>
   <nav class="sidebar">
-    <!-- Logo -->
-    <div class="sidebar-logo">
-      <div class="logo-mark">S</div>
-      <span class="logo-text">SupportDesk</span>
-    </div>
-
     <!-- Nav items -->
     <div class="sidebar-nav">
       <router-link

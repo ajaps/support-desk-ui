@@ -6,7 +6,10 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:ui": "vitest --ui"
   },
   "dependencies": {
     "@apollo/client": "^3.14.0",
@@ -27,6 +30,7 @@
     "@vitejs/plugin-vue": "^6.0.4",
     "@vue/test-utils": "^2.4.6",
     "autoprefixer": "^10.4.27",
+    "happy-dom": "^17.6.3",
     "postcss": "^8.5.6",
     "tailwindcss": "^4.2.1",
     "vite": "^8.0.0-beta.13",

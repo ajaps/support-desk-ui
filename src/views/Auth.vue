@@ -9,7 +9,7 @@
       <!-- Logo -->
       <div class="auth-logo">
         <div class="logo-mark">S</div>
-        <span class="logo-text">SupportDesk</span>
+        <span class="logo-text">Support Desk</span>
       </div>
 
       <h2 class="auth-heading">
